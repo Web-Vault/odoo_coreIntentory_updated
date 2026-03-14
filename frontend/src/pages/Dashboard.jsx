@@ -9,6 +9,7 @@ import OperationCard from '../components/OperationCard';
 import AIAssistant from '../components/AIAssistant';
 import ForecastBar from '../components/ForecastBar';
 import BranchCard from '../components/BranchCard';
+import GlobalNavbar from '../components/GlobalNavbar';
 
 const Dashboard = () => {
   const [activePage, setActivePage] = useState('overview');
@@ -38,7 +39,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="shell" style={{ position: 'relative' }}>
+    <div className="shell" style={{ position: 'relative', paddingTop: '64px' }}>
+      <GlobalNavbar />
       {toast.show && (
         <div id="toast" className={`toast ${toast.type}`}>
           <div className="toast-title">{toast.title}</div>
@@ -46,7 +48,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      <TopNav onToast={showToast} />
+      {/* Internal Dashboard TopNav is actually the SubBar in the HTML logic */}
       <SubBar activePage={activePage} onPageChange={setActivePage} onToast={showToast} />
 
       <div className="body">

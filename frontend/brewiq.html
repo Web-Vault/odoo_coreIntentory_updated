@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>BrewIQ — AI Cafe Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ── CAFE PALETTE ─────────────────────────────── */
+:root{
+  --espresso:#2C1A0E;
+  --roast:#4A2C17;
+  --mocha:#7B4F2E;
+  --caramel:#C68642;
+  --latte:#D4A96A;
+  --cream:#F5E6C8;
+  --milk:#FDF6EC;
+  --foam:#FFFAF3;
+  --matcha:#4A7C59;
+  --matcha-l:#D4EDDA;
+  --matcha-d:#2D5E3A;
+  --berry:#8B2252;
+  --berry-l:#F5D0E3;
+  --berry-d:#6B1A3F;
+  --sky:#2E6B9E;
+  --sky-l:#D0E8F7;
+  --sky-d:#1A4F7A;
+  --cinnamon:#A0522D;
+  --cin-l:#F5DEB3;
+  --text:#2C1A0E;
+  --text2:#7B5C3E;
+  --text3:#B09070;
+  --border:#E8D5B0;
+  --bg:#FDF6EC;
+  --card:#FFFAF3;
+  --red:#B91C1C;
+  --red-l:#FEE2E2;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+h1,h2,h3,.display{font-family:'Playfair Display',serif;}
+
+/* ── ANIMATIONS ─────────────────────────────── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideL{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideR{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes barIn{from{width:0}to{width:var(--w)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes countUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── PAGE SYSTEM ─────────────────────────────── */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── NAV ─────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  height:64px;background:var(--espresso);
+  display:flex;align-items:center;padding:0 40px;gap:0;
+  border-bottom:2px solid var(--roast);
+}
+.nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:32px;}
+.nav-logo-icon{font-size:22px;}
+.nav-logo-text{font-family:'Playfair Display',serif;color:var(--latte);font-size:20px;font-weight:700;letter-spacing:-.3px;}
+.nav-links{display:flex;align-items:center;gap:4px;flex:1;}
+.nav-link{padding:8px 14px;border-radius:8px;font-size:13px;color:#A08060;cursor:pointer;transition:all .2s;font-weight:500;border:none;background:transparent;}
+.nav-link:hover{background:rgba(212,169,106,.1);color:var(--latte);}
+.nav-link.active{background:rgba(198,134,66,.2);color:var(--caramel);font-weight:700;}
+.nav-right{display:flex;align-items:center;gap:12px;margin-left:auto;}
+.nav-cta{padding:9px 22px;background:var(--caramel);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.nav-cta:hover{background:var(--mocha);transform:translateY(-1px);}
+.nav-avatar{width:34px;height:34px;border-radius:50%;background:var(--caramel);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--espresso);cursor:pointer;}
+
+/* ── HERO ────────────────────────────────────── */
+.hero{
+  min-height:100vh;padding:120px 80px 80px;
+  background:var(--espresso);
+  display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:60px;
+  position:relative;overflow:hidden;
+}
+.hero-orb{
+  position:absolute;border-radius:50%;opacity:.08;pointer-events:none;
+}
+.hero-orb1{width:600px;height:600px;background:var(--caramel);top:-200px;right:-200px;animation:float 8s ease-in-out infinite;}
+.hero-orb2{width:400px;height:400px;background:var(--matcha);bottom:-150px;left:-100px;animation:float 10s ease-in-out infinite reverse;}
+.hero-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(198,134,66,.15);border:1px solid rgba(198,134,66,.3);
+  border-radius:30px;padding:6px 16px;margin-bottom:24px;
+  animation:fadeUp .6s ease;
+}
+.hero-pill-dot{width:7px;height:7px;border-radius:50%;background:var(--matcha);animation:blink 2s infinite;}
+.hero-pill-txt{color:var(--latte);font-size:12px;font-weight:600;letter-spacing:.04em;}
+.hero h1{
+  font-size:clamp(40px,5vw,64px);color:var(--foam);line-height:1.1;
+  margin-bottom:20px;animation:fadeUp .7s .1s ease both;
+}
+.hero h1 span{color:var(--caramel);}
+.hero-sub{
+  font-size:17px;color:#A08060;line-height:1.7;
+  max-width:480px;margin-bottom:36px;animation:fadeUp .7s .2s ease both;
+}
+.hero-btns{display:flex;gap:14px;animation:fadeUp .7s .3s ease both;}
+.btn-primary{
+  padding:14px 30px;background:var(--caramel);color:#fff;
+  border:none;border-radius:10px;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;
+}
+.btn-primary:hover{background:var(--mocha);transform:translateY(-2px);}
+.btn-secondary{
+  padding:14px 30px;background:transparent;color:var(--latte);
+  border:1.5px solid rgba(212,169,106,.4);border-radius:10px;
+  font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;
+}
+.btn-secondary:hover{border-color:var(--latte);background:rgba(212,169,106,.08);}
+.hero-stats{display:flex;gap:28px;margin-top:48px;animation:fadeUp .7s .4s ease both;}
+.hero-stat{}
+.hero-stat-num{font-family:'Playfair Display',serif;font-size:32px;color:var(--caramel);font-weight:700;}
+.hero-stat-label{font-size:12px;color:#785840;margin-top:2px;}
+.hero-visual{animation:scaleIn .9s .2s ease both;position:relative;}
+.hero-card{
+  background:rgba(255,250,243,.06);border:1px solid rgba(232,213,176,.15);
+  border-radius:16px;padding:24px;backdrop-filter:blur(10px);
+}
+.hero-card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.hero-card-dot{width:8px;height:8px;border-radius:50%;background:var(--matcha);animation:blink 2s infinite;}
+.hero-card-title{color:var(--latte);font-size:13px;font-weight:600;}
+.hero-metric{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(232,213,176,.08);}
+.hero-metric:last-child{border:none;}
+.hm-name{color:#A08060;font-size:12px;}
+.hm-val{color:var(--cream);font-size:12px;font-weight:700;}
+.hm-badge{padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;}
+.hm-red{background:rgba(185,28,28,.2);color:#F87171;}
+.hm-green{background:rgba(74,124,89,.2);color:#6DBF8C;}
+.hm-amber{background:rgba(198,134,66,.2);color:var(--latte);}
+.mini-bar-bg{width:80px;background:rgba(255,255,255,.08);border-radius:3px;height:4px;overflow:hidden;}
+.mini-bar-f{height:100%;border-radius:3px;}
+
+/* ── FEATURES ────────────────────────────────── */
+.features{padding:100px 80px;background:var(--milk);}
+.section-label{font-size:11px;color:var(--caramel);font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;}
+.section-title{font-size:clamp(30px,4vw,44px);color:var(--espresso);line-height:1.2;margin-bottom:16px;}
+.section-sub{font-size:16px;color:var(--text2);max-width:520px;line-height:1.7;}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px;}
+.feat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:28px;transition:all .25s;cursor:default;
+  border-top:3px solid var(--border);
+}
+.feat-card:hover{border-top-color:var(--caramel);transform:translateY(-4px);box-shadow:0 12px 36px rgba(44,26,14,.1);}
+.feat-card:nth-child(2):hover{border-top-color:var(--matcha);}
+.feat-card:nth-child(3):hover{border-top-color:var(--berry);}
+.feat-card:nth-child(4):hover{border-top-color:var(--sky);}
+.feat-card:nth-child(5):hover{border-top-color:var(--cinnamon);}
+.feat-card:nth-child(6):hover{border-top-color:var(--mocha);}
+.feat-icon{font-size:32px;margin-bottom:16px;}
+.feat-title{font-family:'Playfair Display',serif;font-size:19px;color:var(--espresso);margin-bottom:8px;}
+.feat-desc{font-size:13px;color:var(--text2);line-height:1.7;}
+.feat-tag{display:inline-flex;align-items:center;gap:5px;margin-top:14px;background:var(--cream);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--mocha);font-weight:600;}
+
+/* ── HOW IT WORKS ────────────────────────────── */
+.how{padding:100px 80px;background:var(--espresso);position:relative;overflow:hidden;}
+.how-orb{position:absolute;border-radius:50%;opacity:.06;pointer-events:none;}
+.how-orb1{width:500px;height:500px;background:var(--caramel);top:-200px;right:-100px;}
+.how-orb2{width:350px;height:350px;background:var(--matcha);bottom:-150px;left:-100px;}
+.how-label{font-size:11px;color:var(--caramel);font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;}
+.how-title{font-size:clamp(28px,3.5vw,42px);color:var(--foam);margin-bottom:56px;}
+.how-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;position:relative;z-index:1;}
+.how-step{text-align:center;}
+.how-step-num{
+  width:52px;height:52px;border-radius:50%;
+  background:rgba(198,134,66,.15);border:2px solid rgba(198,134,66,.3);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;font-family:'Playfair Display',serif;
+  font-size:20px;color:var(--caramel);font-weight:700;
+}
+.how-step-title{color:var(--cream);font-size:15px;font-weight:700;margin-bottom:8px;}
+.how-step-desc{color:#785840;font-size:13px;line-height:1.6;}
+.how-connector{
+  position:absolute;top:26px;left:calc(25% + 26px);right:calc(25% + 26px);
+  height:2px;background:rgba(198,134,66,.2);
+  display:none;
+}
+
+/* ── AI SECTION ──────────────────────────────── */
+.ai-section{padding:100px 80px;background:var(--milk);display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+.ai-feature-list{display:flex;flex-direction:column;gap:20px;margin-top:40px;}
+.ai-feat{display:flex;gap:16px;align-items:flex-start;}
+.ai-feat-icon{
+  width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.ai-feat-icon.g{background:var(--matcha-l);}
+.ai-feat-icon.a{background:var(--cin-l);}
+.ai-feat-icon.b{background:var(--berry-l);}
+.ai-feat-icon.s{background:var(--sky-l);}
+.ai-feat-title{font-size:14px;font-weight:700;color:var(--espresso);margin-bottom:4px;}
+.ai-feat-desc{font-size:13px;color:var(--text2);line-height:1.6;}
+.ai-visual{background:var(--espresso);border-radius:20px;padding:28px;position:relative;overflow:hidden;}
+.ai-visual-orb{position:absolute;border-radius:50%;opacity:.07;pointer-events:none;}
+.ai-chat-msg{margin-bottom:12px;animation:fadeIn .3s ease;}
+.ai-msg-ai{background:rgba(255,250,243,.08);border:1px solid rgba(232,213,176,.12);border-radius:12px 12px 12px 2px;padding:10px 14px;max-width:85%;}
+.ai-msg-ai-txt{color:#A08060;font-size:12px;line-height:1.6;}
+.ai-msg-u{background:rgba(198,134,66,.15);border:1px solid rgba(198,134,66,.2);border-radius:12px 12px 2px 12px;padding:10px 14px;max-width:85%;margin-left:auto;}
+.ai-msg-u-txt{color:var(--latte);font-size:12px;line-height:1.6;}
+.ai-chat-typing{display:flex;gap:4px;padding:4px 0;}
+.ai-chat-typing span{width:6px;height:6px;border-radius:50%;background:var(--latte);animation:blink .8s infinite;}
+.ai-chat-typing span:nth-child(2){animation-delay:.2s;}
+.ai-chat-typing span:nth-child(3){animation-delay:.4s;}
+
+/* ── PRICING ─────────────────────────────────── */
+.pricing{padding:100px 80px;background:var(--foam);}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px;max-width:900px;margin-left:auto;margin-right:auto;}
+.price-card{background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:32px;transition:all .25s;}
+.price-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(44,26,14,.1);}
+.price-card.featured{border-color:var(--caramel);border-width:2px;position:relative;}
+.price-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--caramel);color:#fff;border-radius:20px;padding:4px 16px;font-size:11px;font-weight:700;white-space:nowrap;}
+.price-plan{font-size:12px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.price-amount{font-family:'Playfair Display',serif;font-size:40px;color:var(--espresso);font-weight:700;}
+.price-period{font-size:13px;color:var(--text3);}
+.price-desc{font-size:13px;color:var(--text2);margin:12px 0 20px;line-height:1.6;}
+.price-divider{height:1px;background:var(--border);margin-bottom:20px;}
+.price-features{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+.price-features li{font-size:13px;color:var(--text2);display:flex;gap:8px;align-items:flex-start;}
+.price-features li::before{content:'✓';color:var(--matcha-d);font-weight:700;flex-shrink:0;}
+.price-btn{width:100%;padding:12px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;border:1.5px solid var(--border);background:transparent;color:var(--mocha);}
+.price-btn:hover{background:var(--cream);}
+.price-card.featured .price-btn{background:var(--caramel);color:#fff;border-color:var(--caramel);}
+.price-card.featured .price-btn:hover{background:var(--mocha);}
+
+/* ── TESTIMONIALS ────────────────────────────── */
+.testimonials{padding:100px 80px;background:var(--espresso);}
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px;}
+.testi-card{background:rgba(255,250,243,.05);border:1px solid rgba(232,213,176,.1);border-radius:16px;padding:28px;transition:all .25s;}
+.testi-card:hover{border-color:rgba(198,134,66,.3);transform:translateY(-3px);}
+.testi-quote{font-size:32px;color:var(--caramel);margin-bottom:12px;font-family:'Playfair Display',serif;line-height:1;}
+.testi-text{font-size:14px;color:#A08060;line-height:1.7;margin-bottom:20px;}
+.testi-author{display:flex;align-items:center;gap:12px;}
+.testi-avatar{width:40px;height:40px;border-radius:50%;background:var(--caramel);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--espresso);}
+.testi-name{color:var(--cream);font-size:13px;font-weight:700;}
+.testi-role{color:#785840;font-size:11px;}
+
+/* ── CTA ─────────────────────────────────────── */
+.cta-section{
+  padding:100px 80px;text-align:center;
+  background:linear-gradient(135deg,var(--milk) 0%,var(--cream) 100%);
+  border-top:1px solid var(--border);
+}
+.cta-title{font-size:clamp(32px,4vw,52px);color:var(--espresso);margin-bottom:16px;}
+.cta-sub{font-size:17px;color:var(--text2);max-width:500px;margin:0 auto 36px;line-height:1.7;}
+.cta-btns{display:flex;gap:14px;justify-content:center;}
+
+/* ── FOOTER ──────────────────────────────────── */
+footer{background:var(--espresso);padding:60px 80px 36px;border-top:1px solid var(--roast);}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px;}
+.footer-brand{font-family:'Playfair Display',serif;color:var(--latte);font-size:22px;font-weight:700;margin-bottom:12px;}
+.footer-desc{font-size:13px;color:#785840;line-height:1.7;max-width:260px;}
+.footer-col-title{color:var(--cream);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;}
+.footer-link{display:block;color:#785840;font-size:13px;margin-bottom:10px;cursor:pointer;transition:color .15s;}
+.footer-link:hover{color:var(--latte);}
+.footer-bottom{border-top:1px solid var(--roast);padding-top:24px;display:flex;justify-content:space-between;align-items:center;}
+.footer-copy{color:#785840;font-size:12px;}
+
+/* ── INVENTORY APP ───────────────────────────── */
+#page-app{padding-top:64px;}
+.app-shell{display:flex;flex-direction:column;height:calc(100vh - 64px);background:var(--bg);}
+.app-topbar{height:42px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:0;flex-shrink:0;}
+.app-menu-item{padding:11px 14px;font-size:12px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-weight:500;}
+.app-menu-item:hover{color:var(--mocha);}
+.app-menu-item.on{color:var(--caramel);border-bottom-color:var(--caramel);font-weight:700;}
+.app-body{display:flex;flex:1;overflow:hidden;}
+.app-sidebar{width:198px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.sg-section{padding:8px 0;}
+.sg-label{padding:6px 14px 4px;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:700;}
+.sg-item{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;font-size:12px;color:var(--text2);cursor:pointer;transition:background .15s;font-weight:500;}
+.sg-item:hover{background:var(--cream);color:var(--mocha);}
+.sg-item.on{background:var(--cin-l);color:var(--cinnamon);font-weight:700;}
+.sg-badge{border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;}
+.sg-red{background:#FEE2E2;color:#B91C1C;}
+.sg-amber{background:var(--cin-l);color:var(--cinnamon);}
+.app-main{flex:1;overflow-y:auto;background:var(--bg);}
+.app-pg{display:none;}
+.app-pg.on{display:block;animation:fadeIn .25s ease;}
+.app-toolbar{padding:11px 20px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.breadcrumb{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;}
+.bc-sep{color:var(--border);}
+.bc-active{color:var(--mocha);font-weight:700;}
+.tb-gap{flex:1;}
+.tb-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text2);transition:all .15s;}
+.tb-btn:hover{background:var(--cream);color:var(--mocha);}
+.tb-btn.prim{background:var(--caramel);color:#fff;border-color:var(--caramel);}
+.tb-btn.prim:hover{background:var(--mocha);}
+.tb-btn.grn{background:var(--matcha);color:#fff;border-color:var(--matcha);}
+.vt{display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+.vt-b{padding:5px 9px;font-size:12px;cursor:pointer;background:var(--card);color:var(--text3);border:none;}
+.vt-b.on{background:var(--cin-l);color:var(--cinnamon);}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 20px 0;}
+.sc{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:14px 16px;border-top:3px solid var(--caramel);transition:all .2s;animation:fadeIn .3s ease both;}
+.sc:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(44,26,14,.1);}
+.sc.m{border-top-color:var(--matcha);}
+.sc.b{border-top-color:var(--berry);}
+.sc.s{border-top-color:var(--sky);}
+.slabel{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:6px;}
+.sval{font-size:22px;font-weight:800;color:var(--espresso);}
+.ssub{font-size:10px;color:var(--text3);margin-top:3px;}
+.tup{color:var(--matcha-d);font-size:10px;font-weight:700;}
+.tdn{color:#B91C1C;font-size:10px;font-weight:700;}
+.op-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px;padding:16px 20px;}
+.op-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;animation:fadeIn .3s ease both;position:relative;overflow:hidden;}
+.op-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--caramel);transform:scaleX(0);transition:transform .2s;transform-origin:left;}
+.op-card:hover{border-color:var(--latte);transform:translateY(-3px);box-shadow:0 6px 20px rgba(44,26,14,.1);}
+.op-card:hover::after{transform:scaleX(1);}
+.op-num{font-size:30px;font-weight:800;color:var(--espresso);margin-bottom:4px;}
+.op-label{font-size:11px;color:var(--mocha);font-weight:700;}
+.op-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+.op-badge{position:absolute;top:10px;right:10px;}
+.table-wrap{background:var(--card);border-radius:12px;margin:14px 20px;border:1px solid var(--border);overflow:hidden;}
+.tbl-hd{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--milk);}
+.tbl-title{font-size:12px;font-weight:700;color:var(--espresso);}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+thead tr{border-bottom:1px solid var(--border);background:var(--milk);}
+th{padding:9px 14px;text-align:left;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+td{padding:10px 14px;color:var(--text2);border-bottom:1px solid var(--cream);transition:background .1s;}
+td.bold{color:var(--espresso);font-weight:700;}
+tr:hover td{background:var(--foam);}
+tr:last-child td{border-bottom:none;}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600;}
+.b-g{background:var(--matcha-l);color:var(--matcha-d);}
+.b-r{background:#FEE2E2;color:#B91C1C;}
+.b-a{background:var(--cin-l);color:var(--cinnamon);}
+.b-c{background:var(--cream);color:var(--mocha);}
+.b-s{background:var(--sky-l);color:var(--sky-d);}
+.b-b{background:var(--berry-l);color:var(--berry-d);}
+.b-m{background:var(--matcha-l);color:var(--matcha-d);}
+.prog-wrap{display:flex;align-items:center;gap:8px;}
+.prog-bg{flex:1;background:var(--cream);border-radius:3px;height:5px;overflow:hidden;}
+.prog-f{height:100%;border-radius:3px;animation:barIn .7s ease both;width:var(--w);}
+.kk-wrap{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;}
+.kk-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;animation:fadeIn .3s ease both;}
+.kk-card:hover{border-color:var(--caramel);transform:translateY(-3px);box-shadow:0 6px 20px rgba(44,26,14,.1);}
+.kk-count{font-size:26px;font-weight:800;color:var(--caramel);margin:8px 0 2px;}
+.kk-label{font-size:13px;font-weight:700;color:var(--espresso);}
+.kk-sub{font-size:10px;color:var(--text3);}
+.fc-bar{display:flex;align-items:flex-end;gap:5px;height:64px;padding:0 20px 14px;}
+.fc-col{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;cursor:pointer;}
+.fc-b{width:100%;border-radius:4px 4px 0 0;min-height:4px;transition:filter .15s;}
+.fc-b:hover{filter:brightness(1.2);}
+.fc-lbl{font-size:9px;color:var(--text3);font-weight:600;}
+.wh-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px 20px;}
+.wh-card{background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--border);border-top:3px solid var(--caramel);transition:all .2s;animation:fadeIn .3s ease both;}
+.wh-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(44,26,14,.1);}
+.wh-nm{color:var(--espresso);font-size:13px;font-weight:700;}
+.wh-loc{color:var(--text3);font-size:10px;margin-bottom:12px;margin-top:2px;}
+.wh-ms{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.wh-m{background:var(--milk);border-radius:8px;padding:9px 11px;border:1px solid var(--cream);}
+.wh-ml{color:var(--text3);font-size:9px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;font-weight:700;}
+.wh-mv{color:var(--espresso);font-size:12px;font-weight:700;}
+.util-w{margin-bottom:14px;}
+.util-r{display:flex;justify-content:space-between;margin-bottom:4px;}
+.util-nm{color:var(--espresso);font-size:11px;font-weight:600;}
+.util-pct{font-size:11px;font-weight:700;}
+.util-bg{background:var(--cream);border-radius:4px;height:9px;overflow:hidden;margin-bottom:3px;}
+.util-f{height:100%;border-radius:4px;animation:barIn .9s ease both;}
+.util-s{color:var(--text3);font-size:10px;}
+.chat-wrap{background:var(--card);border-radius:12px;margin:0 20px 14px;border:1px solid var(--border);overflow:hidden;}
+.chat-hd{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--espresso);}
+.chat-hd-dot{width:7px;height:7px;border-radius:50%;background:var(--matcha);animation:blink 1.8s infinite;}
+.chat-hd-txt{font-size:12px;font-weight:700;color:var(--cream);}
+.chat-hd-sub{font-size:10px;color:#A08060;margin-left:4px;}
+.chat-msgs{padding:14px;max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;background:var(--milk);}
+.cmsg-ai{background:var(--card);border:1px solid var(--border);border-radius:10px 10px 10px 2px;padding:9px 12px;max-width:86%;font-size:11px;color:var(--espresso);line-height:1.6;animation:fadeIn .3s ease;}
+.cmsg-u{background:var(--espresso);border-radius:10px 10px 2px 10px;padding:9px 12px;max-width:86%;margin-left:auto;font-size:11px;color:var(--cream);line-height:1.6;animation:fadeIn .3s ease;}
+.typing-d{display:flex;gap:4px;padding:3px 0;}
+.typing-d span{width:6px;height:6px;border-radius:50%;background:var(--latte);animation:blink .8s infinite;}
+.typing-d span:nth-child(2){animation-delay:.2s;}
+.typing-d span:nth-child(3){animation-delay:.4s;}
+.chat-chips{padding:8px 14px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px;background:var(--foam);}
+.chip{padding:4px 11px;border-radius:20px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--mocha);transition:all .15s;}
+.chip:hover{border-color:var(--caramel);background:var(--cin-l);color:var(--cinnamon);}
+.chat-in-row{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--border);background:var(--card);}
+.chat-inp-f{flex:1;background:var(--milk);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--espresso);font-size:11px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .2s;}
+.chat-inp-f:focus{border-color:var(--caramel);}
+/* TOAST */
+.toast-container{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;gap:10px;}
+.toast-item{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--matcha);border-radius:10px;padding:12px 16px;min-width:250px;max-width:320px;box-shadow:0 6px 24px rgba(44,26,14,.15);animation:toastIn .3s ease;}
+.toast-item.warn{border-left-color:var(--caramel);}
+.toast-item.err{border-left-color:var(--red);}
+.toast-title{font-size:12px;font-weight:700;color:var(--espresso);margin-bottom:2px;}
+.toast-sub{font-size:11px;color:var(--text2);}
+/* Filter chips */
+.fc{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text2);transition:all .15s;}
+.fc:hover{border-color:var(--caramel);color:var(--mocha);}
+.fc.on{background:var(--cin-l);color:var(--cinnamon);border-color:var(--latte);}
+
+/* ── CONTACT PAGE ────────────────────────────── */
+.contact-hero{padding:140px 80px 80px;background:var(--espresso);text-align:center;}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;padding:80px;background:var(--milk);max-width:1100px;margin:0 auto;}
+.contact-form{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px;}
+.form-title{font-family:'Playfair Display',serif;font-size:24px;color:var(--espresso);margin-bottom:24px;}
+.form-group{margin-bottom:18px;}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.form-input{width:100%;background:var(--milk);border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;}
+.form-input:focus{border-color:var(--caramel);}
+.form-textarea{min-height:120px;resize:vertical;}
+.form-submit{width:100%;padding:13px;background:var(--caramel);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;margin-top:6px;}
+.form-submit:hover{background:var(--mocha);}
+.contact-info{display:flex;flex-direction:column;gap:28px;padding-top:8px;}
+.ci-item{display:flex;gap:16px;align-items:flex-start;}
+.ci-icon{width:46px;height:46px;border-radius:12px;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid var(--border);}
+.ci-title{font-size:14px;font-weight:700;color:var(--espresso);margin-bottom:4px;}
+.ci-desc{font-size:13px;color:var(--text2);line-height:1.6;}
+.map-placeholder{height:220px;background:var(--espresso);border-radius:14px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin-top:28px;}
+.map-orb{position:absolute;border-radius:50%;opacity:.08;}
+.map-pin{font-size:36px;position:relative;z-index:1;animation:float 3s ease-in-out infinite;}
+.map-label{color:var(--latte);font-size:13px;font-weight:600;margin-top:8px;position:relative;z-index:1;}
+
+/* ── ABOUT PAGE ──────────────────────────────── */
+.about-hero{padding:140px 80px 80px;background:var(--espresso);display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+.about-section{padding:80px;}
+.team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:48px;}
+.team-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;transition:all .2s;}
+.team-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(44,26,14,.1);}
+.team-avatar{width:60px;height:60px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;font-family:'Playfair Display',serif;}
+.team-name{font-size:14px;font-weight:700;color:var(--espresso);margin-bottom:4px;}
+.team-role{font-size:12px;color:var(--text3);}
+.values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px;}
+.val-card{background:var(--foam);border:1px solid var(--border);border-radius:14px;padding:28px;border-left:4px solid var(--caramel);}
+.val-card:nth-child(2){border-left-color:var(--matcha);}
+.val-card:nth-child(3){border-left-color:var(--berry);}
+.val-icon{font-size:28px;margin-bottom:12px;}
+.val-title{font-size:15px;font-weight:700;color:var(--espresso);margin-bottom:8px;}
+.val-desc{font-size:13px;color:var(--text2);line-height:1.6;}
+</style>
+</head>
+<body>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- ── NAV ───────────────────────────────────── -->
+<nav>
+  <a class="nav-brand" onclick="showPage('home')">
+    <span class="nav-logo-icon">☕</span>
+    <span class="nav-logo-text">BrewIQ</span>
+  </a>
+  <div class="nav-links">
+    <button class="nav-link active" id="nl-home" onclick="showPage('home')">Home</button>
+    <button class="nav-link" id="nl-app" onclick="showPage('app')">Inventory App</button>
+    <button class="nav-link" id="nl-about" onclick="showPage('about')">About</button>
+    <button class="nav-link" id="nl-contact" onclick="showPage('contact')">Contact</button>
+  </div>
+  <div class="nav-right">
+    <button class="nav-cta" onclick="showPage('app')">Open App →</button>
+    <div class="nav-avatar">AM</div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     HOME PAGE
+═══════════════════════════════════════════════ -->
+<div id="page-home" class="page active">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-orb hero-orb1"></div>
+    <div class="hero-orb hero-orb2"></div>
+    <div>
+      <div class="hero-pill"><div class="hero-pill-dot"></div><div class="hero-pill-txt">AI-Powered Inventory Intelligence</div></div>
+      <h1>From bean to cup,<br><span>nothing wasted.</span></h1>
+      <p class="hero-sub">BrewIQ is the AI-first inventory management system built for modern café chains — predicting demand, preventing waste, and automating reorders before you run out.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="showPage('app')">Open Inventory App</button>
+        <button class="btn-secondary" onclick="document.getElementById('features-section').scrollIntoView({behavior:'smooth'})">See Features ↓</button>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hero-stat-num">94.2%</div><div class="hero-stat-label">AI forecast accuracy</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">₹28.6K</div><div class="hero-stat-label">Waste prevented / month</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">3 min</div><div class="hero-stat-label">Avg reorder time</div></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-card">
+        <div class="hero-card-header"><div class="hero-card-dot"></div><div class="hero-card-title" style="color:var(--latte)">BrewIQ AI · Live Insights</div></div>
+        <div class="hero-metric"><span class="hm-name">Arabica Beans · Mumbai</span><div style="display:flex;align-items:center;gap:8px;"><div class="mini-bar-bg"><div class="mini-bar-f" style="width:8%;background:#F87171;height:100%;border-radius:3px;"></div></div><span class="hm-badge hm-red">Critical</span></div></div>
+        <div class="hero-metric"><span class="hm-name">Whole Milk · Pune</span><div style="display:flex;align-items:center;gap:8px;"><div class="mini-bar-bg"><div class="mini-bar-f" style="width:65%;background:#6DBF8C;height:100%;border-radius:3px;"></div></div><span class="hm-badge hm-green">Good</span></div></div>
+        <div class="hero-metric"><span class="hm-name">Oat Milk · Pune</span><div style="display:flex;align-items:center;gap:8px;"><div class="mini-bar-bg"><div class="mini-bar-f" style="width:20%;background:#F59E0B;height:100%;border-radius:3px;"></div></div><span class="hm-badge hm-amber">Low</span></div></div>
+        <div class="hero-metric"><span class="hm-name">Vanilla Syrup · Delhi</span><div style="display:flex;align-items:center;gap:8px;"><div class="mini-bar-bg"><div class="mini-bar-f" style="width:10%;background:#F87171;height:100%;border-radius:3px;"></div></div><span class="hm-badge hm-red">Critical</span></div></div>
+        <div class="hero-metric"><span class="hm-name">Robusta Beans · Delhi</span><div style="display:flex;align-items:center;gap:8px;"><div class="mini-bar-bg"><div class="mini-bar-f" style="width:80%;background:#6DBF8C;height:100%;border-radius:3px;"></div></div><span class="hm-badge hm-green">OK</span></div></div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(232,213,176,.1);display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:#785840;font-size:11px;">AI auto-ordered Arabica</span>
+          <span class="hm-badge hm-green">✓ Done</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="features-section">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything your café needs,<br>powered by AI.</h2>
+    <p class="section-sub">From real-time stock tracking to AI-driven demand forecasting — BrewIQ handles the complexity so your team can focus on crafting the perfect cup.</p>
+    <div class="features-grid">
+      <div class="feat-card"><div class="feat-icon">🧠</div><h3 class="feat-title">AI Demand Forecast</h3><p class="feat-desc">Predict how much milk, coffee beans, and syrups you'll need based on weather, weekday patterns, local events and past sales.</p><div class="feat-tag">94.2% accuracy</div></div>
+      <div class="feat-card"><div class="feat-icon">♻️</div><h3 class="feat-title">Waste Prevention</h3><p class="feat-desc">AI flags items about to expire and suggests markdowns, menu specials, or transfers to branches with higher demand before it's too late.</p><div class="feat-tag">₹28.6K saved/month</div></div>
+      <div class="feat-card"><div class="feat-icon">🔄</div><h3 class="feat-title">Auto Replenishment</h3><p class="feat-desc">Set min-max rules and let BrewIQ automatically raise purchase orders to suppliers before you stock out — zero manual intervention needed.</p><div class="feat-tag">18 auto-orders this month</div></div>
+      <div class="feat-card"><div class="feat-icon">🏪</div><h3 class="feat-title">Multi-Branch Management</h3><p class="feat-desc">Manage Mumbai, Pune, Delhi and every future branch from a single dashboard. Transfer stock between branches in two clicks.</p><div class="feat-tag">3 branches live</div></div>
+      <div class="feat-card"><div class="feat-icon">🚨</div><h3 class="feat-title">Anomaly Detection</h3><p class="feat-desc">BrewIQ's AI detects unusual stock drops, theft risks, spoilage patterns, and over-ordering — and alerts your team instantly.</p><div class="feat-tag">Real-time alerts</div></div>
+      <div class="feat-card"><div class="feat-icon">💬</div><h3 class="feat-title">Natural Language AI Chat</h3><p class="feat-desc">Ask "What will we run out of this weekend?" or "Which branch has the most waste?" and get instant, data-driven answers.</p><div class="feat-tag">GPT-powered</div></div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how">
+    <div class="how-orb how-orb1"></div>
+    <div class="how-orb how-orb2"></div>
+    <div class="how-label">How it works</div>
+    <h2 class="how-title">Up and running in 4 steps.</h2>
+    <div class="how-steps">
+      <div class="how-step"><div class="how-step-num">1</div><div class="how-step-title">Connect Your Branches</div><p class="how-step-desc">Add your café locations, set capacity, assign managers and configure supplier contacts.</p></div>
+      <div class="how-step"><div class="how-step-num">2</div><div class="how-step-title">Import Ingredients</div><p class="how-step-desc">Upload your ingredient catalog with units, reorder levels, and expiry rules. BrewIQ learns your menu structure.</p></div>
+      <div class="how-step"><div class="how-step-num">3</div><div class="how-step-title">AI Learns Your Patterns</div><p class="how-step-desc">After 7 days, the AI model calibrates demand forecasts using your sales data, footfall, and seasonal patterns.</p></div>
+      <div class="how-step"><div class="how-step-num">4</div><div class="how-step-title">Sit Back & Brew</div><p class="how-step-desc">BrewIQ handles reorders, waste alerts, and transfers automatically. You focus on the coffee.</p></div>
+    </div>
+  </section>
+
+  <!-- AI SECTION -->
+  <section class="ai-section">
+    <div>
+      <div class="section-label">AI Intelligence</div>
+      <h2 class="section-title">Your smartest employee doesn't sleep.</h2>
+      <p class="section-sub" style="margin-bottom:0;">BrewIQ's AI engine runs 24/7, monitoring every ingredient across every branch — predicting, preventing, and acting.</p>
+      <div class="ai-feature-list">
+        <div class="ai-feat"><div class="ai-feat-icon g">🌿</div><div><div class="ai-feat-title">Demand Spike Prediction</div><div class="ai-feat-desc">Know 7 days ahead when you'll need 35% more cold brew or double the croissants.</div></div></div>
+        <div class="ai-feat"><div class="ai-feat-icon a">🍂</div><div><div class="ai-feat-title">Smart Expiry Management</div><div class="ai-feat-desc">AI calculates optimal discount timing so perishables sell before they expire, not after.</div></div></div>
+        <div class="ai-feat"><div class="ai-feat-icon b">🍒</div><div><div class="ai-feat-title">Theft & Spoilage Detection</div><div class="ai-feat-desc">Unexplained stock drops trigger instant anomaly alerts with root cause suggestions.</div></div></div>
+        <div class="ai-feat"><div class="ai-feat-icon s">☁️</div><div><div class="ai-feat-title">Weather-Aware Forecasting</div><div class="ai-feat-desc">Heat wave coming? AI pre-orders extra iced tea and cold brew before your team even notices.</div></div></div>
+      </div>
+    </div>
+    <div class="ai-visual">
+      <div class="ai-visual-orb" style="width:300px;height:300px;background:var(--caramel);top:-100px;right:-100px;"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--matcha);animation:blink 1.8s infinite;"></div>
+        <span style="color:var(--latte);font-size:12px;font-weight:700;">BrewIQ AI Chat</span>
+      </div>
+      <div id="ai-demo-msgs">
+        <div class="ai-chat-msg"><div class="ai-msg-ai"><div class="ai-msg-ai-txt">Hello! I'm monitoring 48 ingredients across 3 branches right now. What would you like to know?</div></div></div>
+        <div class="ai-chat-msg" style="animation-delay:.3s;"><div class="ai-msg-u"><div class="ai-msg-u-txt">What will we run out of this weekend?</div></div></div>
+        <div class="ai-chat-msg" id="ai-demo-reply" style="animation-delay:.6s;"><div class="ai-msg-ai"><div class="ai-msg-ai-txt">High risk items: Oat Milk at Pune (4L left, need 12L), Vanilla Syrup at Delhi (1 bottle, need 3), Croissants at Mumbai (6 pcs, forecast 40+). I've queued replenishment orders — approve with one click?</div></div></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:14px;flex-wrap:wrap;">
+        <div class="chip" style="background:rgba(255,250,243,.08);border-color:rgba(232,213,176,.15);color:#A08060;" onclick="demoAsk('Arabica stock levels?')">Arabica stock?</div>
+        <div class="chip" style="background:rgba(255,250,243,.08);border-color:rgba(232,213,176,.15);color:#A08060;" onclick="demoAsk('Weekend shortages?')">Weekend risk?</div>
+        <div class="chip" style="background:rgba(255,250,243,.08);border-color:rgba(232,213,176,.15);color:#A08060;" onclick="demoAsk('Waste alerts today?')">Waste alerts?</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing">
+    <div style="text-align:center;">
+      <div class="section-label" style="text-align:center;">Pricing</div>
+      <h2 class="section-title">Simple, transparent pricing.</h2>
+      <p class="section-sub" style="margin:0 auto;">Start free, scale as you grow. No hidden fees, no long-term contracts.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-plan">Starter</div>
+        <div><span class="price-amount">₹0</span><span class="price-period">/month</span></div>
+        <div class="price-desc">Perfect for single-location cafés just getting started with inventory management.</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>1 Branch</li><li>Up to 50 ingredients</li><li>Basic stock tracking</li><li>Manual reorder alerts</li><li>Email support</li>
+        </ul>
+        <button class="price-btn" onclick="toast('Started!','You\'re on the free plan — get started now')">Get started free</button>
+      </div>
+      <div class="price-card featured">
+        <div class="price-badge">Most Popular</div>
+        <div class="price-plan">Growth</div>
+        <div><span class="price-amount">₹4,999</span><span class="price-period">/month</span></div>
+        <div class="price-desc">For growing café chains with multiple branches and real AI needs.</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Up to 5 Branches</li><li>Unlimited ingredients</li><li>AI demand forecasting</li><li>Auto-replenishment</li><li>Waste prevention AI</li><li>Priority support</li>
+        </ul>
+        <button class="price-btn" onclick="toast('Trial started!','Your 14-day free trial of Growth plan is active')">Start 14-day trial</button>
+      </div>
+      <div class="price-card">
+        <div class="price-plan">Enterprise</div>
+        <div><span class="price-amount">Custom</span></div>
+        <div class="price-desc">For large chains with 10+ branches, custom integrations and dedicated support.</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li>Unlimited branches</li><li>Custom AI models</li><li>ERP / POS integration</li><li>Dedicated success manager</li><li>SLA guarantee</li><li>On-premise option</li>
+        </ul>
+        <button class="price-btn" onclick="showPage('contact')">Talk to sales →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials">
+    <div style="text-align:center;">
+      <div class="how-label">Testimonials</div>
+      <h2 class="how-title" style="margin-bottom:0;">Loved by café operators.</h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card"><div class="testi-quote">"</div><p class="testi-text">BrewIQ cut our monthly waste by 40%. The AI predicted we'd need extra cold brew before a heat wave we didn't even know was coming. Incredible.</p><div class="testi-author"><div class="testi-avatar" style="background:var(--caramel);">RP</div><div><div class="testi-name">Rahul Patel</div><div class="testi-role">Owner · Third Wave Café, Mumbai</div></div></div></div>
+      <div class="testi-card"><div class="testi-quote">"</div><p class="testi-text">We manage 4 branches and BrewIQ keeps everything in sync. The auto-reorder alone saved us 8 hours of manual work every week.</p><div class="testi-author"><div class="testi-avatar" style="background:var(--matcha);">SK</div><div><div class="testi-name">Sneha Kapoor</div><div class="testi-role">Operations Head · Brew & Co., Pune</div></div></div></div>
+      <div class="testi-card"><div class="testi-quote">"</div><p class="testi-text">The AI chat is a game changer. I just ask "what's low at Delhi?" and instantly know what to order. Feels like having a data analyst on call 24/7.</p><div class="testi-author"><div class="testi-avatar" style="background:var(--berry);">AM</div><div><div class="testi-name">Arjun Mehta</div><div class="testi-role">Founder · Bean Theory, Delhi</div></div></div></div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2 class="cta-title">Ready to brew smarter?</h2>
+    <p class="cta-sub">Join café operators across India who've cut waste, eliminated stockouts, and freed their teams to focus on what matters — the coffee.</p>
+    <div class="cta-btns">
+      <button class="btn-primary" onclick="showPage('app')">Open Inventory App</button>
+      <button class="btn-secondary" style="color:var(--mocha);border-color:var(--border);" onclick="showPage('contact')">Talk to us</button>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-grid">
+      <div><div class="footer-brand">☕ BrewIQ</div><p class="footer-desc">AI-powered inventory intelligence for modern café chains. From bean to cup — nothing wasted.</p></div>
+      <div><div class="footer-col-title">Product</div><div class="footer-link" onclick="showPage('app')">Inventory App</div><div class="footer-link">Features</div><div class="footer-link">Pricing</div><div class="footer-link">Changelog</div></div>
+      <div><div class="footer-col-title">Company</div><div class="footer-link" onclick="showPage('about')">About Us</div><div class="footer-link">Blog</div><div class="footer-link">Careers</div><div class="footer-link" onclick="showPage('contact')">Contact</div></div>
+      <div><div class="footer-col-title">Support</div><div class="footer-link">Documentation</div><div class="footer-link">API Reference</div><div class="footer-link">Community</div><div class="footer-link">Status</div></div>
+    </div>
+    <div class="footer-bottom"><div class="footer-copy">© 2025 BrewIQ. Built for café operators who care about quality.</div><div class="footer-copy">Made with ☕ in India</div></div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     INVENTORY APP PAGE
+═══════════════════════════════════════════════ -->
+<div id="page-app" class="page">
+  <div id="app-shell" class="app-shell" style="padding-top:64px;">
+    <!-- APP TOP BAR -->
+    <div class="app-topbar">
+      <div class="app-menu-item on" onclick="setAppMenu(this,'overview')">Overview</div>
+      <div class="app-menu-item" onclick="setAppMenu(this,'products')">Products</div>
+      <div class="app-menu-item" onclick="setAppMenu(this,'operations')">Operations</div>
+      <div class="app-menu-item" onclick="setAppMenu(this,'replenishment')">Replenishment</div>
+      <div class="app-menu-item" onclick="setAppMenu(this,'branches')">Branches</div>
+      <div class="app-menu-item" onclick="setAppMenu(this,'aiassist')">🤖 AI Assistant</div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+        <div class="tb-btn" onclick="toast('Settings','Configure warehouses, routes &amp; reorder rules')">⚙ Settings</div>
+      </div>
+    </div>
+    <div class="app-body">
+      <!-- SIDEBAR -->
+      <div class="app-sidebar">
+        <div class="sg-section">
+          <div class="sg-label">Operations</div>
+          <div class="sg-item on" onclick="setSideNav(this,'overview')">📦 Receipts <span class="sg-badge sg-amber">8</span></div>
+          <div class="sg-item" onclick="setSideNav(this,'operations')">🚚 Deliveries <span class="sg-badge sg-amber">5</span></div>
+          <div class="sg-item" onclick="setSideNav(this,'operations')">↔ Transfers <span class="sg-badge sg-amber">3</span></div>
+          <div class="sg-item" onclick="setSideNav(this,'operations')">⚙ Adjustments</div>
+        </div>
+        <div class="sg-section" style="border-top:1px solid var(--border);">
+          <div class="sg-label">Ingredients</div>
+          <div class="sg-item" onclick="setSideNav(this,'products')">☕ All Ingredients</div>
+          <div class="sg-item" onclick="setSideNav(this,'products')">⚠ Low Stock <span class="sg-badge sg-red">6</span></div>
+          <div class="sg-item" onclick="setSideNav(this,'products')">📅 Expiring Soon <span class="sg-badge sg-red">4</span></div>
+        </div>
+        <div class="sg-section" style="border-top:1px solid var(--border);">
+          <div class="sg-label">Branches</div>
+          <div class="sg-item" onclick="setSideNav(this,'branches')">☕ Mumbai — Bandra</div>
+          <div class="sg-item" onclick="setSideNav(this,'branches')">☕ Pune — Koregaon</div>
+          <div class="sg-item" onclick="setSideNav(this,'branches')">☕ Delhi — Connaught <span class="sg-badge sg-red">!</span></div>
+        </div>
+        <div class="sg-section" style="border-top:1px solid var(--border);">
+          <div class="sg-label">AI Features</div>
+          <div class="sg-item" onclick="setSideNav(this,'replenishment')">📈 Demand Forecast</div>
+          <div class="sg-item" onclick="setSideNav(this,'aiassist')">🤖 Waste Prevention</div>
+          <div class="sg-item" onclick="setSideNav(this,'replenishment')">🔄 Auto-Reorder</div>
+        </div>
+      </div>
+      <!-- MAIN AREA -->
+      <div class="app-main">
+
+        <!-- OVERVIEW -->
+        <div id="app-overview" class="app-pg on">
+          <div class="app-toolbar">
+            <div class="breadcrumb"><span>Inventory</span><span class="bc-sep">/</span><span class="bc-active">Overview</span></div>
+            <div class="tb-gap"></div>
+            <div class="vt"><div class="vt-b on">▪▪</div><div class="vt-b">☰</div></div>
+            <div class="tb-btn prim" onclick="addOp()">+ New Transfer</div>
+          </div>
+          <div class="stat-row">
+            <div class="sc" style="animation-delay:.05s;"><div class="slabel">☕ Ingredients</div><div class="sval" id="s1">0</div><div class="ssub"><span class="tup">↑ 4 new</span> this month</div></div>
+            <div class="sc m" style="animation-delay:.1s;"><div class="slabel">⚠ Low Stock</div><div class="sval" id="s2">0</div><div class="ssub"><span class="tdn">↓ needs reorder</span></div></div>
+            <div class="sc s" style="animation-delay:.15s;"><div class="slabel">₹ Stock Value</div><div class="sval" id="s3">₹0</div><div class="ssub"><span class="tup">↑ 12%</span> vs last week</div></div>
+            <div class="sc b" style="animation-delay:.2s;"><div class="slabel">🤖 AI Saved</div><div class="sval" id="s4">₹0</div><div class="ssub">Waste prevented</div></div>
+          </div>
+          <div class="op-grid">
+            <div class="op-card" style="animation-delay:.04s" onclick="toast('Receipts','8 incoming shipments ready to validate')"><div class="op-badge"><span class="badge b-a">8 ready</span></div><div style="font-size:26px;margin-bottom:8px;">📦</div><div class="op-num" id="oc1">0</div><div class="op-label">Receipts</div><div class="op-sub">Validate incoming stock</div></div>
+            <div class="op-card" style="animation-delay:.07s" onclick="toast('Deliveries','5 orders ready to dispatch')"><div class="op-badge"><span class="badge b-s">5 to ship</span></div><div style="font-size:26px;margin-bottom:8px;">🚚</div><div class="op-num" id="oc2">0</div><div class="op-label">Deliveries</div><div class="op-sub">Outgoing transfers</div></div>
+            <div class="op-card" style="animation-delay:.10s" onclick="toast('Transfers','3 branch-to-branch in progress')"><div class="op-badge"><span class="badge b-b">3 pending</span></div><div style="font-size:26px;margin-bottom:8px;">↔</div><div class="op-num" id="oc3">0</div><div class="op-label">Transfers</div><div class="op-sub">Branch to branch</div></div>
+            <div class="op-card" style="animation-delay:.13s" onclick="toast('Quality Checks','All FSSAI checks passed today')"><div class="op-badge"><span class="badge b-g">All clear</span></div><div style="font-size:26px;margin-bottom:8px;">✅</div><div class="op-num" id="oc4">0</div><div class="op-label">Quality Checks</div><div class="op-sub">FSSAI compliance</div></div>
+            <div class="op-card" style="animation-delay:.16s" onclick="toast('Replenishments','6 AI auto-orders triggered','warn')"><div class="op-badge"><span class="badge b-a">AI Active</span></div><div style="font-size:26px;margin-bottom:8px;">🔄</div><div class="op-num" id="oc5">0</div><div class="op-label">Replenishments</div><div class="op-sub">Auto &amp; manual orders</div></div>
+            <div class="op-card" style="animation-delay:.19s" onclick="toast('Waste Alerts','4 expiring items need action','err')"><div class="op-badge"><span class="badge b-r">Urgent</span></div><div style="font-size:26px;margin-bottom:8px;">🗑</div><div class="op-num" id="oc6">0</div><div class="op-label">Waste Alerts</div><div class="op-sub">Expiring items</div></div>
+          </div>
+          <div class="table-wrap">
+            <div class="tbl-hd"><div class="tbl-title">Recent Operations</div><div style="margin-left:auto;display:flex;gap:6px;"><div class="tb-btn" onclick="toast('Filter applied','Showing last 7 days')">▾ Filter</div><div class="tb-btn prim" onclick="addOp()">+ New</div></div></div>
+            <table><thead><tr><th><input type="checkbox"/></th><th>Reference</th><th>Type</th><th>From</th><th>To</th><th>Ingredient</th><th>Qty</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody id="op-body">
+              <tr><td><input type="checkbox"/></td><td class="bold" style="color:var(--sky-d);cursor:pointer;" onclick="toast('WH/IN/00041','Arabica Beans 15kg from BeanSource Co.')">WH/IN/00041</td><td><span class="badge b-s">Receipt</span></td><td>BeanSource</td><td>Mumbai</td><td class="bold">Arabica Beans</td><td>15 kg</td><td><span class="badge b-g">Done</span></td><td>Today 09:14</td></tr>
+              <tr><td><input type="checkbox"/></td><td class="bold" style="color:var(--sky-d);cursor:pointer;" onclick="toast('WH/OUT/00088','Oat Milk 2L out from Pune')">WH/OUT/00088</td><td><span class="badge b-a">Delivery</span></td><td>Pune</td><td>POS</td><td class="bold">Oat Milk</td><td>2 L</td><td><span class="badge b-g">Done</span></td><td>Today 08:45</td></tr>
+              <tr><td><input type="checkbox"/></td><td class="bold" style="color:var(--sky-d);cursor:pointer;" onclick="toast('WH/INT/00019','Vanilla Syrup 3btl Delhi→Pune')">WH/INT/00019</td><td><span class="badge b-b">Transfer</span></td><td>Delhi</td><td>Pune</td><td class="bold">Vanilla Syrup</td><td>3 btl</td><td><span class="badge b-a">In Progress</span></td><td>Today 08:20</td></tr>
+              <tr><td><input type="checkbox"/></td><td class="bold" style="color:var(--sky-d);cursor:pointer;" onclick="toast('WH/IN/00040','Oat Milk 40L from DairyFresh')">WH/IN/00040</td><td><span class="badge b-s">Receipt</span></td><td>DairyFresh</td><td>Pune</td><td class="bold">Oat Milk</td><td>40 L</td><td><span class="badge b-g">Done</span></td><td>Jan 12</td></tr>
+              <tr><td><input type="checkbox"/></td><td class="bold" style="color:var(--sky-d);cursor:pointer;" onclick="toast('WH/ADJ/00007','Stock count adjustment Mumbai')">WH/ADJ/00007</td><td><span class="badge b-c">Adjustment</span></td><td>—</td><td>Mumbai</td><td class="bold">Croissants</td><td>+24 pcs</td><td><span class="badge b-s">To Do</span></td><td>Jan 11</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+
+        <!-- PRODUCTS -->
+        <div id="app-products" class="app-pg">
+          <div class="app-toolbar">
+            <div class="breadcrumb"><span>Inventory</span><span class="bc-sep">/</span><span class="bc-active">Products</span></div>
+            <div class="tb-gap"></div>
+            <div class="fc on">Low Stock ✕</div>
+            <div class="fc">Expiring Soon</div>
+            <div class="fc">By Branch</div>
+            <div class="tb-btn prim" onclick="toast('New Ingredient','Create ingredient form opened')">+ New</div>
+          </div>
+          <div class="table-wrap" style="margin-top:14px;">
+            <table><thead><tr><th><input type="checkbox"/></th><th>SKU</th><th>Ingredient</th><th>Category</th><th>Branch</th><th>On Hand</th><th>Forecasted</th><th>Reorder Rule</th><th>Price</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox"/></td><td style="color:var(--caramel);font-weight:700;font-size:10px;font-family:monospace;">CB-001</td><td class="bold" style="color:var(--sky-d);cursor:pointer;" onclick="toast('Arabica Coffee Beans','CB-001 — Critical: 2.1kg, reorder at 5kg')">Arabica Coffee Beans</td><td><span class="badge b-a">Coffee</span></td><td>Mumbai</td><td><div class="prog-wrap"><div class="prog-bg"><div class="prog-f" style="--w:8%;background:#B91C1C;"></div></div><span style="color:#B91C1C;font-size:11px;font-weight:700;min-width:40px;">2.1 kg</span></div></td><td style="color:#B91C1C;">-2.9 kg</td><td><span class="badge b-g">Min-Max</span></td><td>₹850/kg</td><td><span class="badge b-r">Critical</span></td></tr>
+              <tr><td><input type="checkbox"/></td><td style="color:var(--caramel);font-weight:700;font-size:10px;font-family:monospace;">ML-002</td><td class="bold" style="color:var(--sky-d);cursor:pointer;" onclick="toast('Whole Milk','ML-002 — Good: 32L at Pune')">Whole Milk</td><td><span class="badge b-s">Dairy</span></td><td>Pune</td><td><div class="prog-wrap"><div class="prog-bg"><div class="prog-f" style="--w:64%;background:var(--matcha);"></div></div><span style="color:var(--matcha-d);font-size:11px;font-weight:700;min-width:40px;">32 L</span></div></td><td style="color:var(--matcha-d);">+18 L</td><td><span class="badge b-g">Min-Max</span></td><td>₹65/L</td><td><span class="badge b-g">OK</span></td></tr>
+              <tr><td><input type="checkbox"/></td><td style="color:var(--caramel);font-weight:700;font-size:10px;font-family:monospace;">ML-003</td><td class="bold" style="color:var(--sky-d);cursor:pointer;" onclick="toast('Oat Milk','ML-003 — Low: 4L, reorder triggered')">Oat Milk</td><td><span class="badge b-s">Dairy Alt</span></td><td>Pune</td><td><div class="prog-wrap"><div class="prog-bg"><div class="prog-f" style="--w:20%;background:var(--caramel);"></div></div><span style="color:var(--cinnamon);font-size:11px;font-weight:700;min-width:40px;">4 L</span></div></td><td style="color:var(--cinnamon);">+16 L</td><td><span class="badge b-a">MTO</span></td><td>₹160/L</td><td><span class="badge b-a">Low</span></td></tr>
+              <tr><td><input type="checkbox"/></td><td style="color:var(--caramel);font-weight:700;font-size:10px;font-family:monospace;">SY-001</td><td class="bold" style="color:var(--sky-d);cursor:pointer;" onclick="toast('Vanilla Syrup','SY-001 — 1 bottle left at Delhi')">Vanilla Syrup</td><td><span class="badge b-b">Syrups</span></td><td>Delhi</td><td><div class="prog-wrap"><div class="prog-bg"><div class="prog-f" style="--w:10%;background:#B91C1C;"></div></div><span style="color:#B91C1C;font-size:11px;font-weight:700;min-width:40px;">1 btl</span></div></td><td style="color:#B91C1C;">-2 btl</td><td><span class="badge b-r">Urgent</span></td><td>₹420/btl</td><td><span class="badge b-r">Critical</span></td></tr>
+              <tr><td><input type="checkbox"/></td><td style="color:var(--caramel);font-weight:700;font-size:10px;font-family:monospace;">BK-001</td><td class="bold" style="color:var(--sky-d);cursor:pointer;" onclick="toast('Croissants','BK-001 — 6 pcs, expiring in 18h')">Croissants</td><td><span class="badge b-c">Bakery</span></td><td>Mumbai</td><td><div class="prog-wrap"><div class="prog-bg"><div class="prog-f" style="--w:30%;background:var(--caramel);"></div></div><span style="color:var(--cinnamon);font-size:11px;font-weight:700;min-width:40px;">6 pcs</span></div></td><td style="color:var(--cinnamon);">+34 pcs</td><td><span class="badge b-a">MTO</span></td><td>₹60/pc</td><td><span class="badge b-a">Low</span></td></tr>
+              <tr><td><input type="checkbox"/></td><td style="color:var(--caramel);font-weight:700;font-size:10px;font-family:monospace;">CB-002</td><td class="bold" style="color:var(--sky-d);cursor:pointer;" onclick="toast('Robusta Beans','CB-002 — Healthy: 18kg at Delhi')">Robusta Beans</td><td><span class="badge b-a">Coffee</span></td><td>Delhi</td><td><div class="prog-wrap"><div class="prog-bg"><div class="prog-f" style="--w:80%;background:var(--matcha);"></div></div><span style="color:var(--matcha-d);font-size:11px;font-weight:700;min-width:40px;">18 kg</span></div></td><td style="color:var(--matcha-d);">+12 kg</td><td><span class="badge b-g">Min-Max</span></td><td>₹620/kg</td><td><span class="badge b-g">OK</span></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+
+        <!-- OPERATIONS -->
+        <div id="app-operations" class="app-pg">
+          <div class="app-toolbar"><div class="breadcrumb"><span>Inventory</span><span class="bc-sep">/</span><span class="bc-active">Operations</span></div><div class="tb-gap"></div><div class="tb-btn prim" onclick="toast('New Operation','Select: Receipt / Delivery / Transfer')">+ New</div></div>
+          <div class="kk-wrap">
+            <div class="kk-card" onclick="toast('Receipts','8 receipts ready to validate')"><div style="font-size:26px;margin-bottom:8px;">📦</div><div class="kk-count">8</div><div class="kk-label">Receipts</div><div class="kk-sub">Incoming from suppliers</div><div style="margin-top:8px;font-size:10px;color:var(--cinnamon);font-weight:600;">● 3 urgent</div></div>
+            <div class="kk-card" onclick="toast('Deliveries','5 outgoing orders ready')"><div style="font-size:26px;margin-bottom:8px;">🚚</div><div class="kk-count">5</div><div class="kk-label">Deliveries</div><div class="kk-sub">Outgoing to POS</div><div style="margin-top:8px;font-size:10px;color:var(--sky-d);font-weight:600;">● On schedule</div></div>
+            <div class="kk-card" onclick="toast('Transfers','3 branch moves in progress')"><div style="font-size:26px;margin-bottom:8px;">↔</div><div class="kk-count">3</div><div class="kk-label">Transfers</div><div class="kk-sub">Branch to branch</div><div style="margin-top:8px;font-size:10px;color:var(--berry-d);font-weight:600;">● In progress</div></div>
+            <div class="kk-card" onclick="toast('Physical Inventory','Cycle count due at Mumbai')"><div style="font-size:26px;margin-bottom:8px;">📋</div><div class="kk-count">1</div><div class="kk-label">Physical Inventory</div><div class="kk-sub">Cycle counting</div><div style="margin-top:8px;font-size:10px;color:var(--matcha-d);font-weight:600;">● Scheduled</div></div>
+            <div class="kk-card" onclick="toast('Quality Checks','All FSSAI checks passed today')"><div style="font-size:26px;margin-bottom:8px;">✅</div><div class="kk-count">12</div><div class="kk-label">Quality Checks</div><div class="kk-sub">FSSAI &amp; freshness</div><div style="margin-top:8px;font-size:10px;color:var(--matcha-d);font-weight:600;">● All passed</div></div>
+            <div class="kk-card" onclick="toast('Scrap / Waste','4 items scrapped — ₹1,440 loss','err')"><div style="font-size:26px;margin-bottom:8px;">🗑</div><div class="kk-count">4</div><div class="kk-label">Scrap / Waste</div><div class="kk-sub">Logged discards</div><div style="margin-top:8px;font-size:10px;color:#B91C1C;font-weight:600;">● ₹1,440 loss</div></div>
+          </div>
+        </div>
+
+        <!-- REPLENISHMENT -->
+        <div id="app-replenishment" class="app-pg">
+          <div class="app-toolbar"><div class="breadcrumb"><span>Inventory</span><span class="bc-sep">/</span><span class="bc-active">Replenishment</span></div><div class="tb-gap"></div><div class="tb-btn" onclick="toast('Exported','CSV downloaded')">↓ Export</div><div class="tb-btn grn" onclick="toast('All Orders Triggered!','6 POs created by AI auto-reorder')">🔄 Order All</div></div>
+          <div style="padding:14px 20px 4px;">
+            <div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;">7-day demand forecast — click bars for details</div>
+            <div class="fc-bar">
+              <div class="fc-col"><div class="fc-b" style="height:28px;background:var(--cream);border:1px solid var(--latte);" onclick="toast('Monday','8kg Arabica, 12L Milk needed')"></div><div class="fc-lbl">Mon</div></div>
+              <div class="fc-col"><div class="fc-b" style="height:40px;background:var(--latte);" onclick="toast('Tuesday','11kg Arabica, 18L Milk needed')"></div><div class="fc-lbl">Tue</div></div>
+              <div class="fc-col"><div class="fc-b" style="height:34px;background:var(--latte);" onclick="toast('Wednesday','9kg Arabica, 14L Milk needed')"></div><div class="fc-lbl">Wed</div></div>
+              <div class="fc-col"><div class="fc-b" style="height:46px;background:var(--caramel);" onclick="toast('Thursday','High: 14kg Arabica, 22L Milk','warn')"></div><div class="fc-lbl">Thu</div></div>
+              <div class="fc-col"><div class="fc-b" style="height:54px;background:var(--mocha);" onclick="toast('Friday','Very high: 18kg Arabica, 30L Milk','warn')"></div><div class="fc-lbl">Fri</div></div>
+              <div class="fc-col"><div class="fc-b" style="height:60px;background:var(--roast);" onclick="toast('Saturday','PEAK: 20kg Arabica, 35L Milk — order now!','warn')"></div><div class="fc-lbl">Sat</div></div>
+              <div class="fc-col"><div class="fc-b" style="height:56px;background:var(--roast);" onclick="toast('Sunday','Peak: 19kg Arabica, 32L Milk','warn')"></div><div class="fc-lbl">Sun</div></div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th><input type="checkbox"/></th><th>Ingredient</th><th>Branch</th><th>On Hand</th><th>Min Qty</th><th>To Order</th><th>Supplier</th><th>Lead Time</th><th>Est. Cost</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox" checked/></td><td class="bold" style="color:#B91C1C;">⚠ Arabica Beans</td><td>Mumbai</td><td style="color:#B91C1C;">2.1 kg</td><td>5 kg</td><td style="color:var(--sky-d);font-weight:700;">15 kg</td><td>BeanSource</td><td>2 days</td><td class="bold">₹12,750</td><td><span class="badge b-g" style="cursor:pointer;" onclick="toast('PO Sent!','PO-1042: 15kg Arabica to BeanSource')">✓ Order</span></td></tr>
+              <tr><td><input type="checkbox" checked/></td><td class="bold" style="color:var(--cinnamon);">⚠ Oat Milk</td><td>Pune</td><td style="color:var(--cinnamon);">4 L</td><td>10 L</td><td style="color:var(--sky-d);font-weight:700;">20 L</td><td>DairyFresh</td><td>1 day</td><td class="bold">₹3,200</td><td><span class="badge b-a" style="cursor:pointer;" onclick="toast('PO Sent!','PO-1043: 20L Oat Milk to DairyFresh')">✓ Order</span></td></tr>
+              <tr><td><input type="checkbox" checked/></td><td class="bold" style="color:#B91C1C;">⚠ Vanilla Syrup</td><td>Delhi</td><td style="color:#B91C1C;">1 btl</td><td>3 btl</td><td style="color:var(--sky-d);font-weight:700;">6 btl</td><td>SweetSyrups</td><td>3 days</td><td class="bold">₹2,520</td><td><span class="badge b-g" style="cursor:pointer;" onclick="toast('PO Sent!','PO-1044: 6btl Vanilla to SweetSyrups')">✓ Order</span></td></tr>
+              <tr><td><input type="checkbox"/></td><td class="bold">Croissants</td><td>Mumbai</td><td>6 pcs</td><td>20 pcs</td><td style="color:var(--sky-d);font-weight:700;">40 pcs</td><td>BakerySupply</td><td>1 day</td><td class="bold">₹2,400</td><td><span class="badge b-s" style="cursor:pointer;" onclick="toast('PO Sent!','PO-1045: 40 Croissants to BakerySupply')">✓ Order</span></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+
+        <!-- BRANCHES -->
+        <div id="app-branches" class="app-pg">
+          <div class="app-toolbar"><div class="breadcrumb"><span>Inventory</span><span class="bc-sep">/</span><span class="bc-active">Branches</span></div><div class="tb-gap"></div><div class="tb-btn prim" onclick="toast('New Branch','Branch setup form opened')">+ Add Branch</div></div>
+          <div class="wh-grid">
+            <div class="wh-card" style="animation-delay:.04s;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;"><div><div class="wh-nm">☕ Mumbai — Bandra</div><div class="wh-loc">📍 Linking Rd, Bandra West</div></div><span class="badge b-g">Open</span></div><div class="wh-ms"><div class="wh-m"><div class="wh-ml">Capacity</div><div class="wh-mv">800 kg</div></div><div class="wh-m"><div class="wh-ml">Items</div><div class="wh-mv">18</div></div><div class="wh-m"><div class="wh-ml">Stock Value</div><div class="wh-mv" style="color:var(--matcha-d);">₹92,400</div></div><div class="wh-m"><div class="wh-ml">AI Score</div><div class="wh-mv" style="color:var(--caramel);">8.4/10</div></div></div></div>
+            <div class="wh-card" style="animation-delay:.08s;border-top-color:var(--matcha);"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;"><div><div class="wh-nm">☕ Pune — Koregaon</div><div class="wh-loc">📍 Koregaon Park, Pune</div></div><span class="badge b-g">Open</span></div><div class="wh-ms"><div class="wh-m"><div class="wh-ml">Capacity</div><div class="wh-mv">600 kg</div></div><div class="wh-m"><div class="wh-ml">Items</div><div class="wh-mv">15</div></div><div class="wh-m"><div class="wh-ml">Stock Value</div><div class="wh-mv" style="color:var(--matcha-d);">₹76,200</div></div><div class="wh-m"><div class="wh-ml">AI Score</div><div class="wh-mv" style="color:var(--caramel);">7.9/10</div></div></div></div>
+            <div class="wh-card" style="animation-delay:.12s;border-top-color:#B91C1C;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;"><div><div class="wh-nm">☕ Delhi — Connaught</div><div class="wh-loc">📍 Connaught Place, Delhi</div></div><span class="badge b-r">Near Full</span></div><div class="wh-ms"><div class="wh-m"><div class="wh-ml">Capacity</div><div class="wh-mv">700 kg</div></div><div class="wh-m"><div class="wh-ml">Items</div><div class="wh-mv">15</div></div><div class="wh-m"><div class="wh-ml">Stock Value</div><div class="wh-mv" style="color:var(--matcha-d);">₹68,500</div></div><div class="wh-m"><div class="wh-ml">AI Score</div><div class="wh-mv" style="color:#B91C1C;">6.2/10</div></div></div></div>
+          </div>
+          <div class="table-wrap"><div class="tbl-hd"><div class="tbl-title">Branch Utilization</div></div>
+            <div style="padding:16px 20px;">
+              <div class="util-w"><div class="util-r"><span class="util-nm">Mumbai — Bandra</span><span class="util-pct" style="color:var(--matcha-d);">42%</span></div><div class="util-bg"><div class="util-f" style="--w:42%;width:42%;background:var(--matcha);"></div></div><div class="util-s">336/800 kg · AI: Excellent</div></div>
+              <div class="util-w"><div class="util-r"><span class="util-nm">Pune — Koregaon</span><span class="util-pct" style="color:var(--cinnamon);">67%</span></div><div class="util-bg"><div class="util-f" style="--w:67%;width:67%;background:var(--caramel);"></div></div><div class="util-s">402/600 kg · AI: Good</div></div>
+              <div class="util-w" style="margin:0;"><div class="util-r"><span class="util-nm">Delhi — Connaught</span><span class="util-pct" style="color:#B91C1C;">88%</span></div><div class="util-bg"><div class="util-f" style="--w:88%;width:88%;background:#C0392B;"></div></div><div class="util-s">616/700 kg · AI Alert: Near capacity!</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI ASSISTANT -->
+        <div id="app-aiassist" class="app-pg">
+          <div class="app-toolbar"><div class="breadcrumb"><span>Inventory</span><span class="bc-sep">/</span><span class="bc-active">AI Assistant</span></div><div class="tb-gap"></div><div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--matcha-d);font-weight:600;"><div style="width:7px;height:7px;border-radius:50%;background:var(--matcha);animation:blink 1.8s infinite;"></div>Model v3.1 · 94.2% accuracy</div></div>
+          <div class="stat-row" style="padding:14px 20px 12px;">
+            <div class="sc" style="animation-delay:.05s;"><div class="slabel">🤖 Predictions</div><div class="sval">1,284</div><div class="ssub">This month</div></div>
+            <div class="sc m" style="animation-delay:.1s;"><div class="slabel">✓ Accuracy</div><div class="sval">94.2%</div><div class="ssub"><span class="tup">↑ 2.1%</span></div></div>
+            <div class="sc b" style="animation-delay:.15s;"><div class="slabel">₹ Waste Saved</div><div class="sval">₹28.6K</div><div class="ssub">Via AI actions</div></div>
+            <div class="sc s" style="animation-delay:.2s;"><div class="slabel">🔄 Auto-orders</div><div class="sval">18</div><div class="ssub">Zero stockouts</div></div>
+          </div>
+          <div class="chat-wrap" style="margin-top:14px;">
+            <div class="chat-hd"><div class="chat-hd-dot"></div><div class="chat-hd-txt">BrewIQ AI Assistant</div><div class="chat-hd-sub">Natural language inventory intelligence</div></div>
+            <div class="chat-msgs" id="ai-msgs"><div class="cmsg-ai">Hello! I'm BrewIQ's AI. Ask me about stock levels, demand forecasts, waste risks, or reorder suggestions — in plain English.</div></div>
+            <div class="chat-chips">
+              <div class="chip" onclick="askAI('How much Arabica do we have across all branches?')">☕ Arabica stock?</div>
+              <div class="chip" onclick="askAI('What will run out this weekend?')">⚠ Weekend shortages?</div>
+              <div class="chip" onclick="askAI('Which branch has the highest waste risk?')">🗑 Waste risk?</div>
+              <div class="chip" onclick="askAI('Show me replenishment suggestions')">🔄 Reorder queue?</div>
+              <div class="chip" onclick="askAI('What is the total stock value today?')">₹ Stock value?</div>
+            </div>
+            <div class="chat-in-row"><input class="chat-inp-f" id="ai-inp" placeholder="Ask anything about your inventory..." onkeydown="if(event.key==='Enter')submitAI()"/><div class="tb-btn prim" onclick="submitAI()">Ask ↗</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ABOUT PAGE
+═══════════════════════════════════════════════ -->
+<div id="page-about" class="page">
+  <section class="about-hero">
+    <div class="hero-orb hero-orb1"></div>
+    <div>
+      <div class="hero-pill"><div class="hero-pill-dot"></div><div class="hero-pill-txt">Our Story</div></div>
+      <h1 style="font-size:clamp(36px,4vw,56px);color:var(--foam);margin-bottom:16px;">Built by café lovers,<br><span style="color:var(--caramel);">for café operators.</span></h1>
+      <p style="font-size:16px;color:#A08060;line-height:1.7;max-width:460px;">BrewIQ was born out of frustration — watching great cafés lose thousands every month to spoiled milk, empty coffee jars, and manual spreadsheets. We built the AI system we wished existed.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:rgba(255,250,243,.06);border:1px solid rgba(232,213,176,.12);border-radius:14px;padding:24px;"><div style="font-family:'Playfair Display',serif;font-size:36px;color:var(--caramel);font-weight:700;">2023</div><div style="color:#A08060;font-size:13px;margin-top:4px;">Founded in Mumbai</div></div>
+      <div style="background:rgba(255,250,243,.06);border:1px solid rgba(232,213,176,.12);border-radius:14px;padding:24px;"><div style="font-family:'Playfair Display',serif;font-size:36px;color:var(--matcha);font-weight:700;">50+</div><div style="color:#A08060;font-size:13px;margin-top:4px;">Cafés using BrewIQ</div></div>
+      <div style="background:rgba(255,250,243,.06);border:1px solid rgba(232,213,176,.12);border-radius:14px;padding:24px;"><div style="font-family:'Playfair Display',serif;font-size:36px;color:var(--berry);font-weight:700;">₹2Cr</div><div style="color:#A08060;font-size:13px;margin-top:4px;">Waste prevented</div></div>
+      <div style="background:rgba(255,250,243,.06);border:1px solid rgba(232,213,176,.12);border-radius:14px;padding:24px;"><div style="font-family:'Playfair Display',serif;font-size:36px;color:var(--sky);font-weight:700;">12</div><div style="color:#A08060;font-size:13px;margin-top:4px;">Team members</div></div>
+    </div>
+  </section>
+  <section class="about-section" style="background:var(--milk);">
+    <div class="section-label">Our Team</div>
+    <h2 class="section-title">The people behind BrewIQ.</h2>
+    <div class="team-grid">
+      <div class="team-card"><div class="team-avatar" style="background:var(--caramel);color:var(--espresso);">AM</div><div class="team-name">Arjun Mehta</div><div class="team-role">CEO & Co-founder</div></div>
+      <div class="team-card"><div class="team-avatar" style="background:var(--matcha-l);color:var(--matcha-d);">SK</div><div class="team-name">Sneha Kapoor</div><div class="team-role">CTO & Co-founder</div></div>
+      <div class="team-card"><div class="team-avatar" style="background:var(--berry-l);color:var(--berry-d);">RP</div><div class="team-name">Rahul Patel</div><div class="team-role">Head of AI</div></div>
+      <div class="team-card"><div class="team-avatar" style="background:var(--sky-l);color:var(--sky-d);">PS</div><div class="team-name">Priya Sharma</div><div class="team-role">Head of Design</div></div>
+    </div>
+  </section>
+  <section class="about-section" style="background:var(--foam);">
+    <div class="section-label">Our Values</div>
+    <h2 class="section-title">What drives us every day.</h2>
+    <div class="values-grid">
+      <div class="val-card"><div class="val-icon">♻️</div><h3 class="val-title">Zero Waste Philosophy</h3><p class="val-desc">Every feature we build is designed to reduce food waste. It's not just business — it's our responsibility to the planet.</p></div>
+      <div class="val-card"><div class="val-icon">🧠</div><h3 class="val-title">AI for Everyone</h3><p class="val-desc">Powerful AI shouldn't require a data science team. BrewIQ makes enterprise-grade intelligence accessible to every café owner.</p></div>
+      <div class="val-card"><div class="val-icon">☕</div><h3 class="val-title">Café First</h3><p class="val-desc">We obsess over the real problems café operators face — not theoretical ones. Every feature is born from real conversations.</p></div>
+    </div>
+  </section>
+  <footer style="background:var(--espresso);padding:40px 80px;border-top:1px solid var(--roast);">
+    <div class="footer-bottom" style="border:none;padding:0;"><div class="footer-copy">© 2025 BrewIQ. Built for café operators who care about quality.</div><div class="footer-copy">Made with ☕ in India</div></div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     CONTACT PAGE
+═══════════════════════════════════════════════ -->
+<div id="page-contact" class="page">
+  <section class="contact-hero">
+    <div class="hero-orb hero-orb1"></div>
+    <div class="hero-orb hero-orb2"></div>
+    <div class="hero-pill" style="margin:0 auto 20px;display:inline-flex;"><div class="hero-pill-dot"></div><div class="hero-pill-txt">Get in Touch</div></div>
+    <h1 style="font-size:clamp(36px,4vw,52px);color:var(--foam);margin-bottom:12px;position:relative;z-index:1;">Let's brew something<br><span style="color:var(--caramel);">together.</span></h1>
+    <p style="font-size:16px;color:#A08060;position:relative;z-index:1;">Have questions? Want a demo? Just want to chat about coffee and inventory? We're here.</p>
+  </section>
+  <div style="background:var(--milk);padding:60px 80px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;max-width:1000px;margin:0 auto;">
+      <div class="contact-form">
+        <div class="form-title">Send us a message</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="form-group"><label class="form-label">First Name</label><input class="form-input" placeholder="Arjun"/></div>
+          <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" placeholder="Mehta"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" placeholder="arjun@cafe.com" type="email"/></div>
+        <div class="form-group"><label class="form-label">Café / Company</label><input class="form-input" placeholder="Third Wave Café"/></div>
+        <div class="form-group"><label class="form-label">Number of Branches</label><select class="form-input form-select"><option>1 Branch</option><option>2–5 Branches</option><option>5–10 Branches</option><option>10+ Branches</option></select></div>
+        <div class="form-group"><label class="form-label">Message</label><textarea class="form-input form-textarea" placeholder="Tell us about your inventory challenges..."></textarea></div>
+        <button class="form-submit" onclick="toast('Message sent!','We\'ll get back to you within 24 hours ☕')">Send Message ☕</button>
+      </div>
+      <div class="contact-info">
+        <div class="ci-item"><div class="ci-icon">📧</div><div><div class="ci-title">Email Us</div><div class="ci-desc">hello@brewiq.in<br/>support@brewiq.in</div></div></div>
+        <div class="ci-item"><div class="ci-icon">📞</div><div><div class="ci-title">Call Us</div><div class="ci-desc">+91 98765 43210<br/>Mon–Fri, 9am–6pm IST</div></div></div>
+        <div class="ci-item"><div class="ci-icon">📍</div><div><div class="ci-title">Visit Us</div><div class="ci-desc">BrewIQ HQ, Bandra-Kurla Complex,<br/>Mumbai, Maharashtra 400051</div></div></div>
+        <div class="ci-item"><div class="ci-icon">💬</div><div><div class="ci-title">Live Chat</div><div class="ci-desc">Chat with our team directly in the app. Available 9am–9pm IST, 7 days a week.</div></div></div>
+        <div class="map-placeholder"><div class="map-orb" style="width:300px;height:300px;background:var(--caramel);top:-100px;left:-100px;"></div><div style="text-align:center;position:relative;z-index:1;"><div class="map-pin">📍</div><div class="map-label">Mumbai, Maharashtra</div><div style="color:#785840;font-size:11px;margin-top:4px;">Bandra-Kurla Complex</div></div></div>
+      </div>
+    </div>
+  </div>
+  <footer style="background:var(--espresso);padding:40px 80px;border-top:1px solid var(--roast);">
+    <div class="footer-bottom" style="border:none;padding:0;"><div class="footer-copy">© 2025 BrewIQ. Built for café operators who care about quality.</div><div class="footer-copy">Made with ☕ in India</div></div>
+  </footer>
+</div>
+
+<script>
+/* ── PAGE ROUTING ─────────────────────────────── */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  var nl=document.getElementById('nl-'+id);
+  if(nl)nl.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='app')animStats();
+}
+
+/* ── APP MENU ─────────────────────────────────── */
+function setAppMenu(el,page){
+  document.querySelectorAll('.app-menu-item').forEach(i=>i.classList.remove('on'));
+  el.classList.add('on');
+  showAppPg(page);
+}
+function setSideNav(el,page){
+  document.querySelectorAll('.sg-item').forEach(i=>i.classList.remove('on'));
+  el.classList.add('on');
+  showAppPg(page);
+  var menuMap={overview:'overview',products:'products',operations:'operations',replenishment:'replenishment',branches:'branches',aiassist:'aiassist'};
+  document.querySelectorAll('.app-menu-item').forEach(i=>{
+    i.classList.remove('on');
+    if(i.textContent.trim().toLowerCase().includes(page.toLowerCase()))i.classList.add('on');
+  });
+}
+function showAppPg(page){
+  document.querySelectorAll('.app-pg').forEach(p=>p.classList.remove('on'));
+  var pg=document.getElementById('app-'+page);
+  if(pg){pg.classList.add('on');if(page==='overview')animStats();}
+}
+
+/* ── TOAST ────────────────────────────────────── */
+function toast(title,sub,type){
+  type=type||'success';
+  var c=document.getElementById('toasts');
+  var d=document.createElement('div');
+  d.className='toast-item'+(type==='warn'?' warn':type==='err'?' err':'');
+  d.innerHTML='<div class="toast-title">'+title+'</div><div class="toast-sub">'+sub+'</div>';
+  c.appendChild(d);
+  setTimeout(()=>{d.style.opacity='0';d.style.transition='opacity .3s';setTimeout(()=>d.remove(),300);},3500);
+}
+
+/* ── STAT COUNTERS ────────────────────────────── */
+function animStats(){
+  an('s1',0,48,600);an('s2',0,6,500);
+  ac('s3',0,237600,800);ac('s4',0,28600,700);
+  an('oc1',0,8,400);an('oc2',0,5,450);an('oc3',0,3,350);
+  an('oc4',0,12,500);an('oc5',0,6,460);an('oc6',0,4,420);
+}
+function an(id,f,t,d){
+  var el=document.getElementById(id);if(!el)return;
+  var s=null;
+  requestAnimationFrame(function step(ts){if(!s)s=ts;var p=Math.min((ts-s)/d,1);el.textContent=Math.round(f+(t-f)*p);if(p<1)requestAnimationFrame(step);});
+}
+function ac(id,f,t,d){
+  var el=document.getElementById(id);if(!el)return;
+  var s=null;
+  requestAnimationFrame(function step(ts){if(!s)s=ts;var p=Math.min((ts-s)/d,1);var v=Math.round(f+(t-f)*p);el.textContent='₹'+(v>=1000?Math.round(v/100)/10+'L':v);if(p<1)requestAnimationFrame(step);});
+}
+
+/* ── LIVE ACTIVITY ────────────────────────────── */
+var ops=[
+  {ref:'WH/IN/00042',type:'Receipt',cls:'b-s',from:'DairyFresh',to:'Pune',item:'Fresh Cream',qty:'10 L',st:'To Do',sc:'b-s'},
+  {ref:'WH/OUT/00089',type:'Delivery',cls:'b-a',from:'Mumbai',to:'POS',item:'Arabica Beans',qty:'0.5 kg',st:'Done',sc:'b-g'},
+  {ref:'WH/INT/00020',type:'Transfer',cls:'b-b',from:'Pune',to:'Delhi',item:'Oat Milk',qty:'5 L',st:'In Progress',sc:'b-a'},
+];
+var opIdx=0;
+function addOp(){
+  var d=ops[opIdx%ops.length];opIdx++;
+  var tb=document.getElementById('op-body');
+  var tr=document.createElement('tr');tr.style.animation='fadeIn .3s ease';
+  tr.innerHTML='<td><input type="checkbox"/></td><td class="bold" style="color:var(--sky-d);cursor:pointer;">'+d.ref+'</td><td><span class="badge '+d.cls+'">'+d.type+'</span></td><td>'+d.from+'</td><td>'+d.to+'</td><td class="bold">'+d.item+'</td><td>'+d.qty+'</td><td><span class="badge '+d.sc+'">'+d.st+'</span></td><td>Just now</td>';
+  tb.insertBefore(tr,tb.firstChild);
+  if(tb.children.length>6)tb.removeChild(tb.lastChild);
+  toast('Operation added',d.ref+' — '+d.item);
+}
+
+/* ── AI CHAT ──────────────────────────────────── */
+var aiReplies={
+  'How much Arabica do we have across all branches?':'Arabica across branches — Mumbai: 2.1kg (critical, PO-1042 auto-triggered for 15kg, arriving Friday), Delhi: 18kg (healthy), Pune: 8.4kg (adequate). Total: 28.5kg. Weekend forecast needs 52kg. Recommend approving Mumbai order now.',
+  'What will run out this weekend?':'High-risk items: (1) Oat Milk at Pune — 4L on hand, 12L forecast. (2) Vanilla Syrup at Delhi — 1 bottle, need 3. (3) Croissants at Mumbai — 6 pcs, forecast 40+ sold. All three have replenishment orders ready to approve in one click.',
+  'Which branch has the highest waste risk?':'Delhi — Connaught Place scores 6.2/10 AI risk. Issues: Fresh Cream abnormal consumption, Hazelnut Syrup -12% unexplained variance (possible theft flag), branch at 88% capacity. I recommend a temperature audit and transferring 3 slow-movers to Pune.',
+  'Show me replenishment suggestions':'Active queue: Arabica 15kg Mumbai ₹12,750 (urgent), Oat Milk 20L Pune ₹3,200 (today), Vanilla 6btl Delhi ₹2,520 (3-day lead), Croissants 40pcs Mumbai ₹2,400. Total: ₹20,870. AI confidence 91%. Use "Order All" to approve all at once.',
+  'What is the total stock value today?':'Total inventory value: ₹2,37,600 across all branches. Mumbai ₹92,400 (39%), Pune ₹76,200 (32%), Delhi ₹68,500 (29%). Up ₹24,800 (+12%) from last week. Top category: Coffee Beans at ₹82,400.'
+};
+var defAI='I can analyze stock levels, demand patterns and suggest actions across all 3 BrewIQ branches. Try asking: "What is low at Pune?" or "When should I reorder Oat Milk?"';
+
+function askAI(q){
+  appendMsg('u',q);showTyping();
+  setTimeout(()=>{removeTyping();appendMsg('a',aiReplies[q]||defAI);},1300);
+}
+function submitAI(){
+  var inp=document.getElementById('ai-inp');var q=inp.value.trim();
+  if(!q)return;inp.value='';askAI(q);
+}
+function appendMsg(r,txt){
+  var m=document.getElementById('ai-msgs');
+  var d=document.createElement('div');
+  d.className=r==='u'?'cmsg-u':'cmsg-ai';d.textContent=txt;
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+function showTyping(){
+  var m=document.getElementById('ai-msgs');
+  var d=document.createElement('div');d.id='typ';d.className='cmsg-ai';
+  d.innerHTML='<div class="typing-d"><span></span><span></span><span></span></div>';
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+function removeTyping(){var t=document.getElementById('typ');if(t)t.remove();}
+
+/* ── HOME AI DEMO ─────────────────────────────── */
+var demoReplies={
+  'Arabica stock levels?':'Mumbai: 2.1kg (critical, auto-ordering 15kg from BeanSource), Delhi: 18kg, Pune: 8.4kg. Total: 28.5kg across all branches.',
+  'Weekend shortages?':'Oat Milk at Pune, Vanilla Syrup at Delhi, and Croissants at Mumbai are all at risk this weekend. Replenishment orders queued.',
+  'Waste alerts today?':'4 items flagged: Blueberry Muffins expire in 18h (₹1,440 at risk), Fresh Cream 2 days (₹2,800), Sandwich Bread 3 days, Greek Yogurt 5 days. AI suggests 30% discount on Muffins now.'
+};
+function demoAsk(q){
+  var msgs=document.getElementById('ai-demo-msgs');
+  var uDiv=document.createElement('div');uDiv.className='ai-chat-msg';
+  uDiv.innerHTML='<div class="ai-msg-u"><div class="ai-msg-u-txt">'+q+'</div></div>';
+  msgs.appendChild(uDiv);
+  var typDiv=document.createElement('div');typDiv.className='ai-chat-msg';typDiv.id='demo-typ';
+  typDiv.innerHTML='<div class="ai-msg-ai"><div class="ai-chat-typing"><span></span><span></span><span></span></div></div>';
+  msgs.appendChild(typDiv);
+  setTimeout(()=>{
+    document.getElementById('demo-typ').remove();
+    var aDiv=document.createElement('div');aDiv.className='ai-chat-msg';
+    aDiv.innerHTML='<div class="ai-msg-ai"><div class="ai-msg-ai-txt">'+(demoReplies[q]||'Let me check that for you...')+'</div></div>';
+    msgs.appendChild(aDiv);
+  },1200);
+}
+
+/* ── INIT ─────────────────────────────────────── */
+animStats();
+</script>
+</body>
+</html>

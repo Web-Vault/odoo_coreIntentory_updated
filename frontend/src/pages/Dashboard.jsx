@@ -11,6 +11,7 @@ import BranchCard from '../components/BranchCard';
 import GlobalNavbar from '../components/GlobalNavbar';
 import AddIngredientModal from '../components/AddIngredientModal';
 import TransferModal from '../components/TransferModal';
+import DemandChart from '../components/DemandChart';
 
 const Dashboard = () => {
   const [activePage, setActivePage] = useState('overview');
@@ -401,6 +402,11 @@ const Dashboard = () => {
                         delay={idx * 0.05}
                       />
                     ))}
+                    <div className="stat-card" style={{ gridColumn: '1 / -1', height: '350px' }}>
+                      <div style={{ height: '340px', width: '100%', }}>
+                        <DemandChart forecastData={dashboardData.forecast} />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="table-wrap">

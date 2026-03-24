@@ -11,7 +11,7 @@ const SideBar = ({ activePage, onPageChange, dashboardData }) => {
     mumbai: dashboardData?.products?.filter(p => p.branch === 'Mumbai').length || 0,
     pune: dashboardData?.products?.filter(p => p.branch === 'Pune').length || 0,
     delhi: dashboardData?.products?.filter(p => p.branch === 'Delhi').length || 0,
-    autoReorder: dashboardData?.products?.filter(p => p.rule === 'Min-Max' || p.rule === 'Urgent').length || 0,
+    autoReorder: dashboardData?.products?.filter(p => p.statusColor === 'red' || p.status === 'Low' || p.status === 'Critical' || p.status === 'Low Stock').length || 0,
   };
 
   const sections = [

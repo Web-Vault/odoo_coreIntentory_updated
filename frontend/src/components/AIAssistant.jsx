@@ -1,12 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useMutation } from 'react-query';
 
-const AIAssistant = ({ replies, defaultReply }) => {
+const AIAssistant = ({ replies, defaultReply, addItems, removeItems, dashboardData }) => {
   const [messages, setMessages] = useState([
     { role: 'ai', text: "Hello! I'm BrewIQ's AI. Ask me about stock levels, demand forecasts, waste risks, or reorder suggestions — in plain English." }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const msgsEndRef = useRef(null);
+
+  const mutation = useMutation(({ newQuestion, systemPrompt }) =>
+    fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: newQuestion }
+        ],
+      }),
+    }).then(res => res.json())
+  );
 
   const scrollToBottom = () => {
     msgsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -18,15 +36,38 @@ const AIAssistant = ({ replies, defaultReply }) => {
 
   const handleAsk = (q) => {
     if (!q.trim()) return;
-    
+
     setMessages(prev => [...prev, { role: 'u', text: q }]);
     setIsTyping(true);
 
-    setTimeout(() => {
+    // First check if we have a pre-defined reply
+    const lowerQ = q.toLowerCase().trim();
+    const preDefinedMatch = Object.keys(replies).find(key => key.toLowerCase().trim() === lowerQ);
+    
+    if (preDefinedMatch) {
+      setTimeout(() => {
+        setIsTyping(false);
+        setMessages(prev => [...prev, { role: 'ai', text: replies[preDefinedMatch] }]);
+      }, 600);
+      return;
+    }
+
+    // Call backend AI endpoint
+    fetch('http://localhost:8000/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: q })
+    })
+    .then(res => res.json())
+    .then(data => {
       setIsTyping(false);
-      const reply = replies[q] || defaultReply;
-      setMessages(prev => [...prev, { role: 'ai', text: reply }]);
-    }, 1300);
+      setMessages(prev => [...prev, { role: 'ai', text: data.reply }]);
+    })
+    .catch(err => {
+      setIsTyping(false);
+      console.error('AI Error:', err);
+      setMessages(prev => [...prev, { role: 'ai', text: "Sorry, I'm having trouble connecting to my brain right now." }]);
+    });
   };
 
   const handleSubmit = (e) => {

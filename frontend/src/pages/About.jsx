@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Dashboard.css';
+import '../styles/Landing.css';
 import GlobalNavbar from '../components/GlobalNavbar';
 
 const About = () => {

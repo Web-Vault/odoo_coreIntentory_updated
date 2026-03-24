@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import '../styles/Dashboard.css';
+import '../styles/Landing.css';
 import GlobalNavbar from '../components/GlobalNavbar';
 
 const Contact = () => {

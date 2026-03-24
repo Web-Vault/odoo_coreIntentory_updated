@@ -1,41 +1,41 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 class StatSchema(BaseModel):
-    id: Optional[str] = None
+    id: Optional[int] = None
     label: str
     value: str
     trend: str
-    trendType: str
+    trendType: str = Field(validation_alias="trend_type")
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 class OperationSummarySchema(BaseModel):
-    id: Optional[str] = None
+    id: Optional[int] = None
     label: str
     value: int
     sub: str
     badge: str
-    badgeColor: str
+    badgeColor: str = Field(validation_alias="badge_color")
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 class RecentOperationSchema(BaseModel):
     ref: str
     type: str
-    typeColor: str
-    from_loc: Optional[str] = None
-    to_loc: Optional[str] = None
-    # Add camelCase aliases for frontend
-    from_pos: Optional[str] = None
-    to_pos: Optional[str] = None
+    typeColor: str = Field(validation_alias="type_color")
+    from_pos: Optional[str] = Field(None, validation_alias="from_loc", serialization_alias="from")
+    to_pos: Optional[str] = Field(None, validation_alias="to_loc", serialization_alias="to")
     item: str
     qty: str
     status: str
-    statusColor: str
+    statusColor: str = Field(validation_alias="status_color")
     date: str
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 class RecentOperationCreate(BaseModel):
     ref: str
@@ -53,41 +53,72 @@ class ProductSchema(BaseModel):
     sku: str
     name: str
     category: str
-    categoryColor: str
+    categoryColor: str = Field(validation_alias="category_color")
     branch: str
-    onHand: float
+    onHand: float = Field(validation_alias="on_hand")
     unit: str
     forecast: float
     rule: str
     price: str
     status: str
-    statusColor: str
+    statusColor: str = Field(validation_alias="status_color")
     progress: int
+    reorderDate: Optional[str] = Field(None, validation_alias="reorder_date")
+    reorderQty: float = Field(0.0, validation_alias="reorder_qty")
     class Config:
         from_attributes = True
+        populate_by_name = True
+
+class ProductUpdate(BaseModel):
+    on_hand: Optional[float] = None
+    reorder_date: Optional[str] = None
+    reorder_qty: Optional[float] = None
+
+class TransferRequest(BaseModel):
+    from_branch: str
+    to_branch: str
+    product_sku: str
+    quantity: float
+
+class ProductCreate(BaseModel):
+    sku: str
+    name: str
+    category: str
+    category_color: str
+    branch: str
+    on_hand: float
+    unit: str
+    forecast: float
+    rule: str
+    price: str
+    status: str
+    status_color: str
+    progress: int
 
 class ForecastSchema(BaseModel):
     day: str
     value: int
     color: str
     border: Optional[str] = None
-    desc: str
+    desc: str = Field(validation_alias="description")
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 class BranchSchema(BaseModel):
     name: str
     loc: str
     status: str
-    statusColor: str
+    statusColor: str = Field(validation_alias="status_color")
     capacity: str
     items: int
     value: str
     score: str
     util: int
-    utilDesc: str
+    utilDesc: str = Field(validation_alias="util_desc")
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 class AIReplySchema(BaseModel):
     question: str
@@ -115,7 +146,7 @@ class UserSchema(UserBase):
 class DashboardDataSchema(BaseModel):
     stats: List[StatSchema]
     operations: List[OperationSummarySchema]
-    recentOperations: List[dict] # Use dict to allow flexible keys like 'from'/'to'
+    recentOperations: List[RecentOperationSchema]
     products: List[ProductSchema]
     forecast: List[ForecastSchema]
     branches: List[BranchSchema]

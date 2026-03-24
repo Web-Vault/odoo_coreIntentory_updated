@@ -7,6 +7,7 @@ const SubBar = ({ activePage, onPageChange, onToast }) => {
     { id: 'operations', label: 'Operations' },
     { id: 'replenishment', label: 'Replenishment' },
     { id: 'branches', label: 'Branches' },
+    { id: 'auto-reorder', label: '🚚 Auto-Reorder' },
     { id: 'aiassist', label: '🧠 AI Assistant' },
   ];
 

@@ -48,6 +48,8 @@ class Product(Base):
     status = Column(String(100))
     status_color = Column(String(50))
     progress = Column(Integer)
+    reorder_date = Column(String(100), nullable=True)
+    reorder_qty = Column(Float, default=0.0)
 
 class Forecast(Base):
     __tablename__ = "forecasts"

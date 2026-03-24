@@ -1,25 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .database import get_db, engine, Base
-from . import models, schemas
+from . import models, schemas, parser
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from datetime import datetime
 import random
-import os
-from dotenv import load_dotenv
-from openai import OpenAI
-
-# Load .env from the current directory (backend/)
-env_path = os.path.join(os.path.dirname(__file__), '.env')
-load_dotenv(dotenv_path=env_path)
-
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
-    # Use a dummy key if not set, but handle it in the chat function
-    api_key = "missing_key"
-
-client = OpenAI(api_key=api_key)
 
 # Create database tables if they don't exist
 models.Base.metadata.create_all(bind=engine)
@@ -86,68 +72,14 @@ def get_dashboard_data(db: Session = Depends(get_db)):
         "aiReplies": ai_replies
     }
 
-@app.post("/api/ai/chat")
-def ai_chat(query: dict, db: Session = Depends(get_db)):
-    user_msg = query.get("message", "").lower()
+@app.post("/api/parser/query")
+def parse_query(query: dict, db: Session = Depends(get_db)):
+    user_msg = query.get("message", "").strip()
+    if not user_msg:
+        return {"reply": "Please enter a message."}
     
-    # 1. Fetch current database state for context
-    products = db.query(models.Product).all()
-    stats = db.query(models.Stat).all()
-    branches = db.query(models.Branch).all()
-    recent_ops = db.query(models.RecentOperation).order_by(models.RecentOperation.id.desc()).limit(5).all()
-    
-    # Format context for AI
-    product_context = "\n".join([
-        f"- {p.name} (SKU: {p.sku}): {p.on_hand} {p.unit} in {p.branch}. Status: {p.status}, Price: {p.price}" 
-        for p in products
-    ])
-    stat_context = "\n".join([f"- {s.label}: {s.value}" for s in stats])
-    branch_context = "\n".join([f"- {b.name}: {b.items} items" for b in branches])
-    op_context = "\n".join([f"- {o.type}: {o.item} ({o.qty}) from {o.from_loc} to {o.to_loc} on {o.date}" for o in recent_ops])
-
-    system_prompt = f"""
-    You are BrewIQ's expert inventory AI assistant. You have full access to the current café inventory database.
-    Your goal is to provide accurate, helpful, and concise answers based ONLY on the data provided below.
-
-    CURRENT INVENTORY DATA:
-    {product_context}
-
-    CURRENT DASHBOARD STATS:
-    {stat_context}
-
-    BRANCHES:
-    {branch_context}
-
-    RECENT OPERATIONS:
-    {op_context}
-
-    INSTRUCTIONS:
-    1. Always use the provided data to answer questions.
-    2. If a user asks for prices, stock levels, or branch info, give exact numbers from the context.
-    3. If the data is not in the context, politely say you don't have that information.
-    4. Keep your tone professional, friendly, and efficient (like a senior café manager).
-    5. You can perform basic calculations (e.g., total stock across all branches) if asked.
-    """
-
-    try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_msg}
-            ],
-            temperature=0.3, # Low temperature for factual accuracy
-            max_tokens=200
-        )
-        reply = response.choices[0].message.content.strip()
-        return {"reply": reply}
-    except Exception as e:
-        print(f"OpenAI Error: {e}")
-        # Fallback to a simple heuristic if OpenAI fails
-        if "stock" in user_msg or "inventory" in user_msg:
-            total_stock = sum([p.on_hand for p in products])
-            return {"reply": f"I'm having trouble with my advanced brain, but I can tell you that we have a total of {total_stock:.1f} units in stock right now."}
-        return {"reply": "I'm sorry, I'm experiencing a technical issue with my AI core. Please try again in a moment."}
+    reply = parser.get_heuristic_reply(user_msg, db)
+    return {"reply": reply}
 
 @app.post("/api/operations", response_model=schemas.RecentOperationSchema)
 def create_operation(operation: schemas.RecentOperationCreate, db: Session = Depends(get_db)):

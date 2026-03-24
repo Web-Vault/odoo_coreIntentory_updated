@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useMutation } from 'react-query';
 
 const AIAssistant = ({ replies, defaultReply, addItems, removeItems, dashboardData }) => {
   const [messages, setMessages] = useState([
@@ -8,23 +7,6 @@ const AIAssistant = ({ replies, defaultReply, addItems, removeItems, dashboardDa
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const msgsEndRef = useRef(null);
-
-  const mutation = useMutation(({ newQuestion, systemPrompt }) =>
-    fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: newQuestion }
-        ],
-      }),
-    }).then(res => res.json())
-  );
 
   const scrollToBottom = () => {
     msgsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -53,7 +35,7 @@ const AIAssistant = ({ replies, defaultReply, addItems, removeItems, dashboardDa
     }
 
     // Call backend AI endpoint
-    fetch('http://localhost:8000/api/ai/chat', {
+    fetch('http://localhost:8000/api/parser/query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: q })
@@ -78,7 +60,7 @@ const AIAssistant = ({ replies, defaultReply, addItems, removeItems, dashboardDa
   };
 
   return (
-    <div className="chat-container" style={{ marginTop: '14px' }}>
+    <div className="chat-container" style={{ marginTop: '20px' }}>
       <div className="chat-hd">
         <div className="chat-ai-dot"></div>
         <div className="chat-hd-txt">BrewIQ AI Assistant</div>
